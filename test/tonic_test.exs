@@ -19,7 +19,7 @@ defmodule TonicTest do
             }
         end
 
-        test "load all values from data", %{ data: data } do
+        test "load all values in correct order from data", %{ data: data } do
             assert { { 
                 { :a, 1 },
                 { :b, 2 },
@@ -90,7 +90,7 @@ defmodule TonicTest do
                 }
             end
 
-            test "load all values from data", %{ data: data } do
+            test "endian overriding of types", %{ data: data } do
                 assert { { 
                     { :a, 1 },
                     { :b, :big },
@@ -133,7 +133,7 @@ defmodule TonicTest do
                 }
             end
 
-            test "load all values from data", %{ data: data } do
+            test "unnamed types", %{ data: data } do
                 assert { { 
                     1,
                     :little,
@@ -186,7 +186,7 @@ defmodule TonicTest do
                 }
             end
 
-            test "load all values from data", %{ data: data } do
+            test "custom functions for types", %{ data: data } do
                 assert { { 
                     1,
                     :little,
