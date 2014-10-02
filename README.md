@@ -19,4 +19,6 @@ To-Do
  * Automatically use loader on extension and magic number match
  * Pass loading off to another module
  * Add specs
+ * Allow for groups to be overriden (their result changed)
+ * Allow for unnamed types
 
