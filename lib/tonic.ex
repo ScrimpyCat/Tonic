@@ -11,6 +11,7 @@ defmodule Tonic do
         end
     end
 
+    defp create_call({ function }), do: quote do: unquote(function)(data, nil, endian, fn { _, value } -> value end)
     defp create_call({ function, name }), do: quote do: unquote(function)(data, unquote(name), endian)
     defp create_call({ function, name, fun }) when is_function(fun) or is_tuple(fun), do: quote do: unquote(function)(data, unquote(name), endian, unquote(fun))
     defp create_call({ function, name, endianness }), do: quote do: unquote(function)(data, unquote(name), unquote(endianness))
@@ -138,6 +139,12 @@ defmodule Tonic do
     #type :new_type, :old_type
     defmacro type(name, type) when is_atom(type) do
         quote do
+            defmacro unquote(name)() do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
             defmacro unquote(name)(label) do
                 quote do
                     @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label) }|@tonic_data_scheme[@tonic_current_scheme]])
@@ -162,6 +169,12 @@ defmodule Tonic do
     #type :new_type, fn data, name, endian -> { nil, data } end
     defmacro type(name, fun) do
         quote do
+            defmacro unquote(name)() do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
             defmacro unquote(name)(label) do
                 quote do
                     @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label) }|@tonic_data_scheme[@tonic_current_scheme]])
@@ -186,6 +199,12 @@ defmodule Tonic do
     #type :new_type, :old_type, :little
     defmacro type(name, type, endianness) do
         quote do
+            defmacro unquote(name)() do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
             defmacro unquote(name)(label) do
                 quote do
                     @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label) }|@tonic_data_scheme[@tonic_current_scheme]])
@@ -210,6 +229,12 @@ defmodule Tonic do
     #type :new_type, :integer, :32, :signed
     defmacro type(name, type, size, signedness) do
         quote do
+            defmacro unquote(name)() do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
             defmacro unquote(name)(label) do
                 quote do
                     @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label) }|@tonic_data_scheme[@tonic_current_scheme]])
@@ -265,6 +290,12 @@ defmodule Tonic do
     #type :new_type, :integer, :32, :signed, :little
     defmacro type(name, type, size, signedness, endianness) do
         quote do
+            defmacro unquote(name)() do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
             defmacro unquote(name)(label) do
                 quote do
                     @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label) }|@tonic_data_scheme[@tonic_current_scheme]])

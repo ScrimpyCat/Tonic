@@ -105,6 +105,47 @@ defmodule TonicTest do
             end
         end
 
+        defmodule Unnamed do
+            use ExUnit.Case
+            use Tonic
+            import CustomTypes
+
+            endian :little
+            int32
+            custom_func_type_endian
+            custom_func_type_lint32
+            custom_wrap_int32
+            custom_wrap_lint32
+            custom_int32
+            custom_lint32
+
+            setup do
+                {
+                    :ok, data: <<
+                        1 :: integer-size(32)-signed-little,
+                        2 :: integer-size(32)-signed-little,
+                        3 :: integer-size(32)-signed-little,
+                        4 :: integer-size(32)-signed-little,
+                        5 :: integer-size(32)-signed-little,
+                        6 :: integer-size(32)-signed-little,
+                        7 :: integer-size(32)-signed-little
+                    >>
+                }
+            end
+
+            test "load all values from data", %{ data: data } do
+                assert { { 
+                    1,
+                    :little,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                }, <<>> } == Tonic.load(data, __MODULE__)
+            end
+        end
+
         defmodule WrapOutput do
             use ExUnit.Case
             use Tonic
