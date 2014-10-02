@@ -18,7 +18,7 @@ defmodule TonicRepeatTests do
         repeat :values, 0 do
         end
         
-        test "empty repeat" do
+        test "repeat zero times" do
             assert { { { :values, [] } }, <<1,2,3,4>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
@@ -31,7 +31,7 @@ defmodule TonicRepeatTests do
             uint8 :v
         end
 
-        test "four values" do
+        test "block based repeat to capture four values" do
             assert { { { :values, [{ { :v, 1 } }, { { :v, 2 } }, { { :v, 3 } }, { { :v, 4 } }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
@@ -44,7 +44,7 @@ defmodule TonicRepeatTests do
             uint8
         end
 
-        test "four values" do
+        test "block based repeat to capture four unnamed values" do
             assert { { { :values, [{ 1 }, { 2 }, { 3 }, { 4 }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
@@ -58,7 +58,7 @@ defmodule TonicRepeatTests do
             uint8 :b
         end
 
-        test "four values" do
+        test "block based repeat to capture 2x2 values" do
             assert { { { :values, [{ { :a, 1 }, { :b, 2 } }, { { :a, 3 }, { :b, 4 } }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
@@ -77,7 +77,7 @@ defmodule TonicRepeatTests do
             uint8 :c
         end
 
-        test "four values" do
+        test "block based repeat to capture 2 times a group that repeats 2 times and a value" do
             assert { { { :values, [{ { :four, [{ { :test, { :a, 1 }, { :b, 2 } } }, { { :test, { :a, 3 }, { :b, 4 } } }] }, { :c, 5 } }, { { :four, [{ { :test, { :a, 6 }, { :b, 7 } } }, { { :test, { :a, 8 }, { :b, 9 } } }] }, { :c, 10 } }] } }, <<>> } == Tonic.load(<<1,2,3,4,5,6,7,8,9,10>>, __MODULE__)
         end
     end
@@ -90,7 +90,7 @@ defmodule TonicRepeatTests do
             uint8 :v
         end
 
-        test "four values" do
+        test "block based repeat with function to strip repeat name" do
             assert { { [{ { :v, 1 } }, { { :v, 2 } }, { { :v, 3 } }, { { :v, 4 } }] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
@@ -105,7 +105,7 @@ defmodule TonicRepeatTests do
             uint8
         end
 
-        test "four values" do
+        test "block based repeat with a function to strip out repeat and index names" do
             assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
@@ -116,7 +116,7 @@ defmodule TonicRepeatTests do
 
         repeat :values, 4, :uint8
 
-        test "four values" do
+        test "repeat an unnamed type" do
             assert { { { :values, [1, 2, 3, 4] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
@@ -127,8 +127,21 @@ defmodule TonicRepeatTests do
 
         repeat 4, :uint8
 
-        test "four values" do
+        test "an unnaned repeat of an unnamed type" do
             assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule UnnamedRepeatBlock do
+        use ExUnit.Case
+        use Tonic
+
+        repeat 4 do
+            uint8 :v
+        end
+
+        test "an unnaned repeat of an unnamed type" do
+            assert { { [v: 1, v: 2, v: 3, v: 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
 end

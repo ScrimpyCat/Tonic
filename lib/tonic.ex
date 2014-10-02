@@ -69,11 +69,20 @@ defmodule Tonic do
 
     #repeat
     #repeat times, :type
-    defmacro repeat(length, type) do
+    defmacro repeat(length, type) when is_atom(type) do
         quote do
             repeat(nil, unquote(length), fn { _, value } ->
                 Enum.map(value, fn { i } -> i end)
             end, [do: unquote(type)()])
+        end
+    end
+
+    #repeat times, do: nil
+    defmacro repeat(length, block) do
+        quote do
+            repeat(nil, unquote(length), fn { _, value } ->
+                Enum.map(value, fn { i } -> i end)
+            end, unquote(block))
         end
     end
 
