@@ -94,4 +94,19 @@ defmodule TonicRepeatTests do
             assert { { [{ { :v, 1 } }, { { :v, 2 } }, { { :v, 3 } }, { { :v, 4 } }] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
+
+    defmodule RepeatBlockWrapComplex do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :values, 4, fn { name, value } ->
+            Enum.map value, fn { i } -> i end
+        end do
+            uint8
+        end
+
+        test "four values" do
+            assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
 end
