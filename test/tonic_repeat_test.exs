@@ -86,7 +86,7 @@ defmodule TonicRepeatTests do
         use ExUnit.Case
         use Tonic
 
-        repeat :values, 4, fn { name, value } -> value end do
+        repeat :values, 4, fn { _, value } -> value end do
             uint8 :v
         end
 
@@ -99,7 +99,7 @@ defmodule TonicRepeatTests do
         use ExUnit.Case
         use Tonic
 
-        repeat :values, 4, fn { name, value } ->
+        repeat :values, 4, fn { _, value } ->
             Enum.map value, fn { i } -> i end
         end do
             uint8
@@ -118,6 +118,17 @@ defmodule TonicRepeatTests do
 
         test "four values" do
             assert { { { :values, [1, 2, 3, 4] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule UnnamedRepeatUnnamedType do
+        use ExUnit.Case
+        use Tonic
+
+        repeat 4, :uint8
+
+        test "four values" do
+            assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
 end
