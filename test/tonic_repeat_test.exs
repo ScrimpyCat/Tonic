@@ -49,4 +49,23 @@ defmodule TonicRepeatTests do
             assert { { { :values, [{ { :a, 1 }, { :b, 2 } }, { { :a, 3 }, { :b, 4 } }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
+
+    defmodule RepeatComplexBlock do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :values, 2 do
+            repeat :four, 2 do
+                group :test do
+                    uint8 :a
+                    uint8 :b
+                end
+            end
+            uint8 :c
+        end
+
+        test "four values" do
+            assert { { { :values, [{ { :four, [{ { :test, { :a, 1 }, { :b, 2 } } }, { { :test, { :a, 3 }, { :b, 4 } } }] }, { :c, 5 } }, { { :four, [{ { :test, { :a, 6 }, { :b, 7 } } }, { { :test, { :a, 8 }, { :b, 9 } } }] }, { :c, 10 } }] } }, <<>> } == Tonic.load(<<1,2,3,4,5,6,7,8,9,10>>, __MODULE__)
+        end
+    end
 end
