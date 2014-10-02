@@ -109,4 +109,15 @@ defmodule TonicRepeatTests do
             assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
+
+    defmodule RepeatUnnamedType do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :values, 4, :uint8
+
+        test "four values" do
+            assert { { { :values, [1, 2, 3, 4] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
 end

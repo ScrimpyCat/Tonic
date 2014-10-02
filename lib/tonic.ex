@@ -68,6 +68,15 @@ defmodule Tonic do
     end
 
     #repeat
+    #repeat :new_repeat, times, :type
+    defmacro repeat(name, length, type) when is_atom(type) do
+        quote do
+            repeat(unquote(name), unquote(length), fn { name, value } ->
+                { name, Enum.map(value, fn { i } -> i end) }
+            end, [do: unquote(type)()])
+        end
+    end
+
     #repeat :new_repeat, times, do: nil
     defmacro repeat(name, length, block) do
         repeat_func_name = String.to_atom("load_repeat_" <> to_string(name))
@@ -106,7 +115,7 @@ defmodule Tonic do
         end
     end
 
-    defp repeater_(func, 0, list, data, name, endian), do: { { name, :lists.reverse(list) }, data }
+    defp repeater_(_func, 0, list, data, name, _endian), do: { { name, :lists.reverse(list) }, data }
     defp repeater_(func, n, list, data, name, endian) do
         { value, data } = func.(data, nil, endian)
         repeater_(func, n - 1, [value|list], data, name, endian)
