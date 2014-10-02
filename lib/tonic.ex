@@ -17,6 +17,7 @@ defmodule Tonic do
     defp create_call({ function, name, endianness }), do: quote do: unquote(function)(data, unquote(name), unquote(endianness))
     defp create_call({ :repeat, function, name, length }), do: quote do: repeater(unquote({ :&, [], [{ :/, [], [{ function, [], __MODULE__ }, 3] }] }), unquote(length), data, unquote(name), endian)
     defp create_call({ function, name, endianness, fun }), do: quote do: unquote(function)(data, unquote(name), unquote(endianness), unquote(fun))
+    defp create_call({ :repeat, function, name, length, fun }), do: quote do: repeater(unquote({ :&, [], [{ :/, [], [{ function, [], __MODULE__ }, 3] }] }), unquote(length), data, unquote(name), endian, unquote(fun))
 
     defp expand_data_scheme([], init_value), do: [quote([do: { unquote(init_value), data }])]
     defp expand_data_scheme(scheme, init_value) do
@@ -86,13 +87,36 @@ defmodule Tonic do
         end
     end
 
-    defp repeater(func, 0, list, data, name, endian), do: { { name, :lists.reverse(list) }, data }
-    defp repeater(func, n, list, data, name, endian) do
-        { value, data } = func.(data, nil, endian)
-        repeater(func, n - 1, [value|list], data, name, endian)
+    #repeat :new_repeat, times, fn { name, value } -> value end, do: nil
+    defmacro repeat(name, length, fun, block) do
+        repeat_func_name = String.to_atom("load_repeat_" <> to_string(name))
+
+        quote do
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, unquote(repeat_func_name), unquote(name), unquote(length), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+
+            @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
+            @tonic_current_scheme unquote(repeat_func_name)
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
+
+            unquote(block)
+
+            [current|previous] = @tonic_previous_scheme
+            @tonic_previous_scheme previous
+            @tonic_current_scheme current
+        end
     end
 
-    def repeater(func, n, data, name, endian), do: repeater(func, n, [], data, name, endian)
+    defp repeater_(func, 0, list, data, name, endian), do: { { name, :lists.reverse(list) }, data }
+    defp repeater_(func, n, list, data, name, endian) do
+        { value, data } = func.(data, nil, endian)
+        repeater_(func, n - 1, [value|list], data, name, endian)
+    end
+
+    def repeater(func, n, data, name, endian), do: repeater_(func, n, [], data, name, endian)
+    def repeater(func, n, data, name, endian, fun) when is_function(fun) do
+        { value, data } = repeater_(func, n, [], data, name, endian)
+        { fun.(value), data }
+    end
 
 
     #group
