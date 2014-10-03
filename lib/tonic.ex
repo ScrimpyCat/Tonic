@@ -165,6 +165,25 @@ defmodule Tonic do
         end
     end
 
+    #group :new_group, fn { name, value } -> value end, do: nil
+    defmacro group(name, fun, block) do
+        group_func_name = String.to_atom("load_group_" <> to_string(name))
+
+        quote do
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ unquote(group_func_name), unquote(name), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+
+            @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
+            @tonic_current_scheme unquote(group_func_name)
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
+
+            unquote(block)
+
+            [current|previous] = @tonic_previous_scheme
+            @tonic_previous_scheme previous
+            @tonic_current_scheme current
+        end
+    end
+
     #type creation
     defp binary_parameters(type, size, signedness, endianness) do
         {
