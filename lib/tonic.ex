@@ -73,7 +73,7 @@ defmodule Tonic do
     #repeat times, :type
     defmacro repeat(length, type) when is_atom(type) do
         quote do
-            repeat(nil, unquote(length), fn { _, value } ->
+            repeat(unquote(String.to_atom("__tonic_anon__" <> to_string(__CALLER__.line))), unquote(length), fn { _, value } ->
                 Enum.map(value, fn { i } -> i end)
             end, [do: unquote(type)()])
         end
@@ -82,7 +82,7 @@ defmodule Tonic do
     #repeat times, do: nil
     defmacro repeat(length, block) do
         quote do
-            repeat(nil, unquote(length), fn { _, value } ->
+            repeat(unquote(String.to_atom("__tonic_anon__" <> to_string(__CALLER__.line))), unquote(length), fn { _, value } ->
                 Enum.map(value, fn { i } -> i end)
             end, unquote(block))
         end
@@ -149,7 +149,7 @@ defmodule Tonic do
     #group do: nil
     defmacro group(block) do
         quote do
-            group(unquote(String.to_atom("__anon__" <> to_string(__CALLER__.line))), fn group -> :erlang.delete_element(1, group) end, unquote(block))
+            group(unquote(String.to_atom("__tonic_anon__" <> to_string(__CALLER__.line))), fn group -> :erlang.delete_element(1, group) end, unquote(block))
         end
     end
 

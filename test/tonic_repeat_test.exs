@@ -140,8 +140,25 @@ defmodule TonicRepeatTests do
             uint8 :v
         end
 
-        test "an unnamed repeat of an unnamed type" do
+        test "an unnamed repeat of an named type" do
             assert { { [v: 1, v: 2, v: 3, v: 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule MultipleUnnamedRepeatBlock do
+        use ExUnit.Case
+        use Tonic
+
+        repeat 2 do
+            uint8 :a
+        end
+
+        repeat 2 do
+            uint8 :b
+        end
+
+        test "multiple unnamed repeats of an named type" do
+            assert { { [a: 1, a: 2], [b: 3, b: 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
 end
