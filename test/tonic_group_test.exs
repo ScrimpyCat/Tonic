@@ -201,4 +201,19 @@ defmodule TonicGroupTests do
             assert { { { :value, 1 } }, <<>> } == Tonic.load(<<1 :: size(32)-little>>, __MODULE__)
         end
     end
+
+    defmodule UnnamedGroupWrapper do
+        use ExUnit.Case
+        use Tonic
+
+        endian :little
+        group do
+            uint16 :a
+            uint16 :b
+        end
+
+        test "group custom functions" do
+            assert { { { { :a, 1 }, { :b, 0 } } }, <<>> } == Tonic.load(<<1 :: size(32)-little>>, __MODULE__)
+        end
+    end
 end

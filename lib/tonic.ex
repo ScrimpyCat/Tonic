@@ -146,10 +146,17 @@ defmodule Tonic do
 
 
     #group
+    #group do: nil
+    defmacro group(block) do
+        quote do
+            group(unquote(String.to_atom(to_string(__CALLER__.line))), fn group -> :erlang.delete_element(1, group) end, unquote(block))
+        end
+    end
+
     #group :new_group, do: nil
     defmacro group(name, block) do
         group_func_name = String.to_atom("load_group_" <> to_string(name))
-        
+
         quote do
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ unquote(group_func_name), unquote(name) }|@tonic_data_scheme[@tonic_current_scheme]])
 
