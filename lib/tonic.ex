@@ -11,12 +11,14 @@ defmodule Tonic do
         end
     end
 
-    defp create_call({ function }), do: quote do: unquote(function)(data, nil, endian, fn { _, value } -> value end)
+    def callback({ value, data }, fun), do: { fun.(value), data }
+
+    defp create_call({ function }), do: quote do: callback(unquote(function)(data, nil, endian), fn { _, value } -> value end)
     defp create_call({ function, name }), do: quote do: unquote(function)(data, unquote(name), endian)
-    defp create_call({ function, name, fun }) when is_function(fun) or is_tuple(fun), do: quote do: unquote(function)(data, unquote(name), endian, unquote(fun))
+    defp create_call({ function, name, fun }) when is_function(fun) or is_tuple(fun), do: quote do: callback(unquote(function)(data, unquote(name), endian), unquote(fun))
     defp create_call({ function, name, endianness }), do: quote do: unquote(function)(data, unquote(name), unquote(endianness))
     defp create_call({ :repeat, function, name, length }), do: quote do: repeater(unquote({ :&, [], [{ :/, [], [{ function, [], __MODULE__ }, 3] }] }), unquote(length), data, unquote(name), endian)
-    defp create_call({ function, name, endianness, fun }), do: quote do: unquote(function)(data, unquote(name), unquote(endianness), unquote(fun))
+    defp create_call({ function, name, endianness, fun }), do: quote do: callback(unquote(function)(data, unquote(name), unquote(endianness)), unquote(fun))
     defp create_call({ :repeat, function, name, length, fun }), do: quote do: repeater(unquote({ :&, [], [{ :/, [], [{ function, [], __MODULE__ }, 3] }] }), unquote(length), data, unquote(name), endian, unquote(fun))
 
     defp expand_data_scheme([], init_value), do: [quote([do: { unquote(init_value), data }])]
@@ -140,10 +142,7 @@ defmodule Tonic do
     end
 
     def repeater(func, n, data, name, endian), do: repeater_(func, n, [], data, name, endian)
-    def repeater(func, n, data, name, endian, fun) when is_function(fun) do
-        { value, data } = repeater_(func, n, [], data, name, endian)
-        { fun.(value), data }
-    end
+    def repeater(func, n, data, name, endian, fun) when is_function(fun), do: callback(repeater_(func, n, [], data, name, endian), fun)
 
 
     #group
@@ -209,10 +208,6 @@ defmodule Tonic do
             end
 
             def unquote(name)(data, name, endianness), do: unquote(type)(data, name, endianness)
-            def unquote(name)(data, name, endianness, fun) do
-                { value, data } = unquote(type)(data, name, endianness)
-                { fun.(value), data }
-            end
         end
     end
 
@@ -239,10 +234,6 @@ defmodule Tonic do
             end
 
             def unquote(name)(data, name, endianness), do: unquote(fun).(data, name, endianness)
-            def unquote(name)(data, name, endianness, f) do
-                { value, data } = unquote(fun).(data, name, endianness)
-                { f.(value), data }
-            end
         end
     end
 
@@ -269,10 +260,6 @@ defmodule Tonic do
             end
 
             def unquote(name)(data, name, _), do: unquote(type)(data, name, unquote(endianness))
-            def unquote(name)(data, name, _, fun) do
-                { value, data } = unquote(type)(data, name, unquote(endianness))
-                { fun.(value), data }
-            end
         end
     end
 
@@ -310,29 +297,14 @@ defmodule Tonic do
                 { { name, value }, data }
             end
 
-            def unquote(name)(data, name, :little, fun) do
-                <<value :: unquote(binary_parameters(type, size, signedness, :little)), data :: binary>> = data
-                { fun.({ name, value }), data }
-            end
-
             def unquote(name)(data, name, :native) do
                 <<value :: unquote(binary_parameters(type, size, signedness, :native)), data :: binary>> = data
                 { { name, value }, data }
             end
 
-            def unquote(name)(data, name, :native, fun) do
-                <<value :: unquote(binary_parameters(type, size, signedness, :native)), data :: binary>> = data
-                { fun.({ name, value }), data }
-            end
-
             def unquote(name)(data, name, :big) do
                 <<value :: unquote(binary_parameters(type, size, signedness, :big)), data :: binary>> = data
                 { { name, value }, data }
-            end
-
-            def unquote(name)(data, name, :big, fun) do
-                <<value :: unquote(binary_parameters(type, size, signedness, :big)), data :: binary>> = data
-                { fun.({ name, value }), data }
             end
         end
     end
@@ -362,11 +334,6 @@ defmodule Tonic do
             def unquote(name)(data, name, _) do
                 <<value :: unquote(binary_parameters(type, size, signedness, endianness)), data :: binary>> = data
                 { { name, value }, data }
-            end
-
-            def unquote(name)(data, name, _, fun) do
-                <<value :: unquote(binary_parameters(type, size, signedness, endianness)), data :: binary>> = data
-                { fun.({ name, value }), data }
             end
         end
     end
