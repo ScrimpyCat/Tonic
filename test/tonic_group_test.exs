@@ -212,8 +212,28 @@ defmodule TonicGroupTests do
             uint16 :b
         end
 
-        test "group custom functions" do
+        test "unnamed group" do
             assert { { { { :a, 1 }, { :b, 0 } } }, <<>> } == Tonic.load(<<1 :: size(32)-little>>, __MODULE__)
+        end
+    end
+
+    defmodule MultipleUnnamedGroups do
+        use ExUnit.Case
+        use Tonic
+
+        endian :little
+        group do
+            uint8 :a
+            uint8 :b
+        end
+
+        group do
+            uint8 :c
+            uint8 :d
+        end
+
+        test "multiple unnamed groups" do
+            assert { { { { :a, 1 }, { :b, 0 } }, { { :c, 0 }, { :d, 0 } } }, <<>> } == Tonic.load(<<1 :: size(32)-little>>, __MODULE__)
         end
     end
 end
