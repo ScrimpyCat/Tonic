@@ -149,7 +149,7 @@ defmodule Tonic do
     #group do: nil
     defmacro group(block) do
         quote do
-            group(unquote(String.to_atom(to_string(__CALLER__.line))), fn group -> :erlang.delete_element(1, group) end, unquote(block))
+            group(unquote(String.to_atom("__anon__" <> to_string(__CALLER__.line))), fn group -> :erlang.delete_element(1, group) end, unquote(block))
         end
     end
 
