@@ -236,4 +236,24 @@ defmodule TonicGroupTests do
             assert { { { { :a, 1 }, { :b, 0 } }, { { :c, 0 }, { :d, 0 } } }, <<>> } == Tonic.load(<<1 :: size(32)-little>>, __MODULE__)
         end
     end
+
+    defmodule MultipleNamedGroups do
+        use ExUnit.Case
+        use Tonic
+
+        endian :little
+        group :values do
+            uint8 :a
+            uint8 :b
+        end
+
+        group :values do
+            uint8 :c
+            uint8 :d
+        end
+
+        test "multiple unnamed groups" do
+            assert { { { :values, { :a, 1 }, { :b, 0 } }, { :values, { :c, 0 }, { :d, 0 } } }, <<>> } == Tonic.load(<<1 :: size(32)-little>>, __MODULE__)
+        end
+    end
 end

@@ -194,7 +194,7 @@ defmodule Tonic do
 
     #group :new_group, do: nil
     defmacro group(name, block) do
-        group_func_name = String.to_atom("load_group_" <> to_string(name))
+        group_func_name = String.to_atom("load_group_" <> to_string(name) <> to_string(__CALLER__.line))
 
         quote do
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ unquote(group_func_name), unquote(name) }|@tonic_data_scheme[@tonic_current_scheme]])
@@ -213,7 +213,7 @@ defmodule Tonic do
 
     #group :new_group, fn { name, value } -> value end, do: nil
     defmacro group(name, fun, block) do
-        group_func_name = String.to_atom("load_group_" <> to_string(name))
+        group_func_name = String.to_atom("load_group_" <> to_string(name) <> to_string(__CALLER__.line))
 
         quote do
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ unquote(group_func_name), unquote(name), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
