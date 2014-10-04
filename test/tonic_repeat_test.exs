@@ -161,4 +161,21 @@ defmodule TonicRepeatTests do
             assert { { [a: 1, a: 2], [b: 3, b: 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
+
+    defmodule MultipleNamedRepeatBlock do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :values, 2 do
+            uint8 :a
+        end
+
+        repeat :values, 2 do
+            uint8 :b
+        end
+
+        test "multiple unnamed repeats of an named type" do
+            assert { { { :values, [{ { :a, 1 } }, { { :a, 2 } }] }, { :values, [{ { :b, 3 } }, { { :b, 4 } }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
 end

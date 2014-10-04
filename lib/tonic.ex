@@ -138,7 +138,7 @@ defmodule Tonic do
 
     #repeat :new_repeat, times, do: nil
     defmacro repeat(name, length, block) do
-        repeat_func_name = String.to_atom("load_repeat_" <> to_string(name))
+        repeat_func_name = String.to_atom("load_repeat_" <> to_string(name) <> to_string(__CALLER__.line))
 
         quote do
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, unquote(repeat_func_name), unquote(name), unquote(length) }|@tonic_data_scheme[@tonic_current_scheme]])
