@@ -122,7 +122,7 @@ defmodule Tonic do
     defmacro repeat(length, block) do
         quote do
             repeat(unquote(String.to_atom("__tonic_anon__" <> to_string(__CALLER__.line))), unquote(length), fn { _, value } ->
-                Enum.map(value, fn { i } -> i end)
+                value
             end, unquote(block))
         end
     end

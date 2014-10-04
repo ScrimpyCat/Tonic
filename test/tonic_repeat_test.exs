@@ -136,12 +136,13 @@ defmodule TonicRepeatTests do
         use ExUnit.Case
         use Tonic
 
-        repeat 4 do
-            uint8 :v
+        repeat 2 do
+            uint8 :a
+            uint8 :b
         end
 
         test "an unnamed repeat of an named type" do
-            assert { { [v: 1, v: 2, v: 3, v: 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+            assert { { [{ { :a, 1 }, { :b, 2 } }, { { :a, 3 }, { :b, 4 } }] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
 
@@ -158,7 +159,7 @@ defmodule TonicRepeatTests do
         end
 
         test "multiple unnamed repeats of an named type" do
-            assert { { [a: 1, a: 2], [b: 3, b: 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+            assert { { [{ { :a, 1 } }, { { :a, 2 } }], [{ { :b, 3 } }, { { :b, 4 } }] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
 
