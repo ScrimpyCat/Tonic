@@ -19,7 +19,7 @@ defmodule Tonic do
     defp op_name({ :repeat, _, name, _, _ }), do: name
     defp op_name(_), do: nil
 
-    def var_entry(name, v = { name, value }), do: v
+    def var_entry(name, v = { name, _ }), do: v
     def var_entry(name, value), do: { name, value }
 
     defp fixup_value({ :get, value }), do: quote do: get_value([scope|currently_loaded], unquote(value))
@@ -110,6 +110,34 @@ defmodule Tonic do
     end
 
     #repeat
+    #repeat :type
+    defmacro repeat(type) when is_atom(type) do
+        quote do
+            repeat(fn _ -> false end, unquote(type))
+        end
+    end
+
+    #repeat do: nil
+    defmacro repeat(block) do
+        quote do
+            repeat(fn _ -> false end, unquote(block))
+        end
+    end
+
+    #repeat :new_repeat, :type
+    defmacro repeat(name, type) when is_atom(name) and is_atom(type) do
+        quote do
+            repeat(unquote(name), fn _ -> false end, unquote(type))
+        end
+    end
+
+    #repeat :new_repeat, do: nil
+    defmacro repeat(name, block) when is_atom(name) do
+        quote do
+            repeat(unquote(name), fn _ -> false end, unquote(block))
+        end
+    end
+
     #repeat times, :type
     defmacro repeat(length, type) when is_atom(type) do
         quote do
@@ -144,7 +172,7 @@ defmodule Tonic do
             @tonic_unique_function_id @tonic_unique_function_id + 1
 
 
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, repeat_func_name, unquote(name), unquote(length) }|@tonic_data_scheme[@tonic_current_scheme]])
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, repeat_func_name, unquote(name), unquote(Macro.escape(length)) }|@tonic_data_scheme[@tonic_current_scheme]])
 
             @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
             @tonic_current_scheme repeat_func_name
@@ -165,7 +193,7 @@ defmodule Tonic do
             @tonic_unique_function_id @tonic_unique_function_id + 1
 
 
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, repeat_func_name, unquote(name), unquote(length), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, repeat_func_name, unquote(name), unquote(Macro.escape(length)), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
 
             @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
             @tonic_current_scheme repeat_func_name
@@ -179,7 +207,16 @@ defmodule Tonic do
         end
     end
 
-    defp repeater_(_func, 0, list, currently_loaded, data, name, _endian), do: { { name, :lists.reverse(list) }, data }
+    defp repeater_(_, should_stop, list, _, <<>>, name, _) when is_function(should_stop) or should_stop === nil, do: { { name, :lists.reverse(list) }, <<>> }
+    defp repeater_(func, should_stop, list, currently_loaded, data, name, endian) when is_function(should_stop) do
+        { value, data } = func.(currently_loaded, data, nil, endian)
+        case should_stop.(list = [value|list]) do
+            true -> { { name, :lists.reverse(list) }, data }
+            _ -> repeater_(func, should_stop, list, currently_loaded, data, name, endian)
+        end
+    end
+
+    defp repeater_(_, 0, list, _, data, name, _), do: { { name, :lists.reverse(list) }, data }
     defp repeater_(func, n, list, currently_loaded, data, name, endian) do
         { value, data } = func.(currently_loaded, data, nil, endian)
         repeater_(func, n - 1, [value|list], currently_loaded, data, name, endian)

@@ -191,4 +191,113 @@ defmodule TonicRepeatTests do
             assert { { [{ [{ { :a, 1 } }, { { :a, 2 } }] }], { :values, [{ { :values, [{ { :b, 3 } }, { { :b, 4 } }] } }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
+
+    defmodule UnnamedRepeatUnnamedTypeUntil do
+        use ExUnit.Case
+        use Tonic
+
+        repeat fn [{ value }|_] -> value == 0 end, :uint8
+
+        test "unnamed repeat until reach 0 value with unnamed type" do
+            assert { { [1,2,0] }, <<3,4>> } == Tonic.load(<<1,2,0,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule UnnamedRepeatUntil do
+        use ExUnit.Case
+        use Tonic
+
+        repeat fn [{ { :v, value } }|_] -> value == 0 end do
+            uint8 :v
+        end
+
+        test "unnamed repeat until reach 0 value" do
+            assert { { [{ { :v, 1 } }, { { :v, 2 } }, { { :v, 0 } }] }, <<3,4>> } == Tonic.load(<<1,2,0,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule RepeatUnnamedTypeUntil do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :until_zero, fn [{ value }|_] -> value == 0 end, :uint8
+
+        test "repeat until reach 0 value with unnamed type" do
+            assert { { { :until_zero, [1,2,0] } }, <<3,4>> } == Tonic.load(<<1,2,0,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule RepeatUntil do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :until_zero, fn [{ { :v, value } }|_] -> value == 0 end do
+            uint8 :v
+        end
+
+        test "repeat until reach 0 value" do
+            assert { { { :until_zero, [{ { :v, 1 } }, { { :v, 2 } }, { { :v, 0 } }] } }, <<3,4>> } == Tonic.load(<<1,2,0,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule RepeatUntilWrapped do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :until_zero, fn [{ { :v, value } }|_] -> value == 0 end, fn { name, values } -> { name, :lists.reverse(values) } end do
+            uint8 :v
+        end
+
+        test "wrapped repeat until reach 0 value" do
+            assert { { { :until_zero, [{ { :v, 0 } }, { { :v, 2 } }, { { :v, 1 } }] } }, <<3,4>> } == Tonic.load(<<1,2,0,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule UnnamedRepeatUnnamedTypeTillEnd do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :uint8
+
+        test "unnamed repeat until reach end of data with unnamed type" do
+            assert { { [1,2,3] }, <<>> } == Tonic.load(<<1,2,3>>, __MODULE__)
+        end
+    end
+
+    defmodule UnnamedRepeatTillEnd do
+        use ExUnit.Case
+        use Tonic
+
+        repeat do
+            uint8 :v
+        end
+
+        test "unnamed repeat until reach end of data" do
+            assert { { [{ { :v, 1 } }, { { :v, 2 } }, { { :v, 3 } }] }, <<>> } == Tonic.load(<<1,2,3>>, __MODULE__)
+        end
+    end
+
+    defmodule RepeatUnnamedTypeTillEnd do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :values, :uint8
+
+        test "repeat until reach end of data with unnamed type" do
+            assert { { { :values, [1,2,3] } }, <<>> } == Tonic.load(<<1,2,3>>, __MODULE__)
+        end
+    end
+
+    defmodule RepeatTillEnd do
+        use ExUnit.Case
+        use Tonic
+
+        repeat :values do
+            uint8 :v
+        end
+
+        test "repeat until reach end of data" do
+            assert { { { :values, [{ { :v, 1 } }, { { :v, 2 } }, { { :v, 3 } }] } }, <<>> } == Tonic.load(<<1,2,3>>, __MODULE__)
+        end
+    end
 end
