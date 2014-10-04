@@ -272,6 +272,12 @@ defmodule Tonic do
                 end
             end
 
+            defmacro unquote(name)(label, endianness, fun) do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(endianness), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
             def unquote(name)(currently_loaded, data, name, endianness), do: unquote(type)(currently_loaded, data, name, endianness)
         end
     end
@@ -295,6 +301,12 @@ defmodule Tonic do
             defmacro unquote(name)(label, endianness_or_fun) do
                 quote do
                     @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(Macro.escape(endianness_or_fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
+            defmacro unquote(name)(label, endianness, fun) do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(endianness), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
                 end
             end
 
@@ -324,6 +336,12 @@ defmodule Tonic do
                 end
             end
 
+            defmacro unquote(name)(label, endianness, fun) do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(endianness), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
             def unquote(name)(currently_loaded, data, name, _), do: unquote(type)(currently_loaded, data, name, unquote(endianness))
         end
     end
@@ -350,12 +368,11 @@ defmodule Tonic do
                 end
             end
 
-            # note: adding supporting for using values currently loaded will likely mean adding a new argument to the data,name,endiannes,[fun] functions, which would this macro/3 could become available
-            # defmacro unquote(name)(label, endianness, fun) do
-            #     quote do
-            #         @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(endianness), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
-            #     end
-            # end
+            defmacro unquote(name)(label, endianness, fun) do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(endianness), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
 
             def unquote(name)(currently_loaded, data, name, :little) do
                 <<value :: unquote(binary_parameters(type, size, signedness, :little)), data :: binary>> = data
@@ -393,6 +410,12 @@ defmodule Tonic do
             defmacro unquote(name)(label, endianness_or_fun) do
                 quote do
                     @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(Macro.escape(endianness_or_fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                end
+            end
+
+            defmacro unquote(name)(label, endianness, fun) do
+                quote do
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :erlang.element(1, unquote(__ENV__.function)), unquote(label), unquote(endianness), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
                 end
             end
 

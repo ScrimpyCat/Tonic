@@ -203,5 +203,63 @@ defmodule TonicTest do
                 }, <<>> } == Tonic.load(data, __MODULE__)
             end
         end
+
+        defmodule WrapEndianOutput do
+            use ExUnit.Case
+            use Tonic
+            import CustomTypes
+
+            def fun({ _, value }), do: value
+
+            endian :little
+            int32 :a, :big, fn { _, value } -> value end
+            custom_func_type_endian :b, :big, fn { _, value } -> value end
+            custom_wrap_int32 :c, :big, fn { _, value } -> value end
+            custom_wrap_lint32 :d, :big, fn { _, value } -> value end
+            custom_int32 :e, :big, fn { _, value } -> value end
+            custom_lint32 :f, :big, fn { _, value } -> value end
+            int32 :g, :big, &WrapOutput.fun/1
+            custom_func_type_endian :h, :big, &WrapOutput.fun/1
+            custom_wrap_int32 :i, :big, &WrapOutput.fun/1
+            custom_wrap_lint32 :j, :big, &WrapOutput.fun/1
+            custom_int32 :k, :big, &WrapOutput.fun/1
+            custom_lint32 :l, :big, &WrapOutput.fun/1
+
+            setup do
+                {
+                    :ok, data: <<
+                        1 :: integer-size(32)-signed-big,
+                        2 :: integer-size(32)-signed-big,
+                        3 :: integer-size(32)-signed-big,
+                        4 :: integer-size(32)-signed-little,
+                        5 :: integer-size(32)-signed-big,
+                        6 :: integer-size(32)-signed-little,
+                        7 :: integer-size(32)-signed-big,
+                        8 :: integer-size(32)-signed-big,
+                        9 :: integer-size(32)-signed-big,
+                        10 :: integer-size(32)-signed-little,
+                        11 :: integer-size(32)-signed-big,
+                        12 :: integer-size(32)-signed-little
+                    >>
+                }
+            end
+
+            test "custom functions for types and overriding endianness", %{ data: data } do
+                assert { { 
+                    1,
+                    :big,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    :big,
+                    9,
+                    10,
+                    11,
+                    12
+                }, <<>> } == Tonic.load(data, __MODULE__)
+            end
+        end
     end
 end
