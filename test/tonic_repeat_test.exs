@@ -179,4 +179,16 @@ defmodule TonicRepeatTests do
             assert { { { :values, [{ { :a, 1 } }, { { :a, 2 } }] }, { :values, [{ { :b, 3 } }, { { :b, 4 } }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end
+
+    defmodule MultipleRepeatsSameLine do
+        use ExUnit.Case
+        use Tonic
+
+        repeat 1, do: repeat(2, do: uint8 :a)
+        repeat :values, 1, do: repeat(:values, 2, do: uint8 :b)
+
+        test "multiple repeats with colliding names on the same line" do
+            assert { { [{ [{ { :a, 1 } }, { { :a, 2 } }] }], { :values, [{ { :values, [{ { :b, 3 } }, { { :b, 4 } }] } }] } }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
 end

@@ -257,12 +257,12 @@ defmodule TonicGroupTests do
         end
     end
 
-    defmodule MultipleUnnamedGroupsSameLine do
+    defmodule MultipleGroupsSameLine do
         use ExUnit.Case
         use Tonic
 
         group do: group do: uint8 :a
-        group :value, [do: group(:value, do: uint8 :b)]
+        group :value, do: group(:value, do: uint8 :b)
 
         test "multiple groups with colliding names on the same line" do
             assert { { { { { :a, 1 } } }, { :value, { :value, { :b, 2 } } } }, <<>> } == Tonic.load(<<1,2>>, __MODULE__)

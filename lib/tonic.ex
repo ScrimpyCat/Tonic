@@ -113,7 +113,7 @@ defmodule Tonic do
     #repeat times, :type
     defmacro repeat(length, type) when is_atom(type) do
         quote do
-            repeat(unquote(String.to_atom("__tonic_anon__" <> to_string(__CALLER__.line))), unquote(length), fn { _, value } ->
+            repeat(:__tonic_anon__, unquote(length), fn { _, value } ->
                 Enum.map(value, fn { i } -> i end)
             end, [do: unquote(type)()])
         end
@@ -122,7 +122,7 @@ defmodule Tonic do
     #repeat times, do: nil
     defmacro repeat(length, block) do
         quote do
-            repeat(unquote(String.to_atom("__tonic_anon__" <> to_string(__CALLER__.line))), unquote(length), fn { _, value } ->
+            repeat(:__tonic_anon__, unquote(length), fn { _, value } ->
                 value
             end, unquote(block))
         end
@@ -139,13 +139,15 @@ defmodule Tonic do
 
     #repeat :new_repeat, times, do: nil
     defmacro repeat(name, length, block) do
-        repeat_func_name = String.to_atom("load_repeat_" <> to_string(name) <> to_string(__CALLER__.line))
-
         quote do
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, unquote(repeat_func_name), unquote(name), unquote(length) }|@tonic_data_scheme[@tonic_current_scheme]])
+            repeat_func_name = String.to_atom("load_repeat_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
+            @tonic_unique_function_id @tonic_unique_function_id + 1
+
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, repeat_func_name, unquote(name), unquote(length) }|@tonic_data_scheme[@tonic_current_scheme]])
 
             @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
-            @tonic_current_scheme unquote(repeat_func_name)
+            @tonic_current_scheme repeat_func_name
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
 
             unquote(block)
@@ -158,13 +160,15 @@ defmodule Tonic do
 
     #repeat :new_repeat, times, fn { name, value } -> value end, do: nil
     defmacro repeat(name, length, fun, block) do
-        repeat_func_name = String.to_atom("load_repeat_" <> to_string(name))
-
         quote do
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, unquote(repeat_func_name), unquote(name), unquote(length), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+            repeat_func_name = String.to_atom("load_repeat_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
+            @tonic_unique_function_id @tonic_unique_function_id + 1
+
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :repeat, repeat_func_name, unquote(name), unquote(length), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
 
             @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
-            @tonic_current_scheme unquote(repeat_func_name)
+            @tonic_current_scheme repeat_func_name
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
 
             unquote(block)
