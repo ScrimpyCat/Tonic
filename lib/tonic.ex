@@ -23,6 +23,8 @@ defmodule Tonic do
     def var_entry(name, value), do: { name, value }
 
     defp fixup_value({ :get, value }), do: quote do: get_value([scope|currently_loaded], unquote(value))
+    defp fixup_value({ :get, _, [value] }), do: fixup_value({ :get, value })
+    defp fixup_value({ :get, _, [value, fun] }), do: fixup_value({ :get, { value, fun } })
     defp fixup_value(value), do: quote do: unquote(value)
 
     def callback({ value, data }, fun), do: { fun.(value), data }
