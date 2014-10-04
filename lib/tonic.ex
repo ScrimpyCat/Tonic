@@ -8,6 +8,7 @@ defmodule Tonic do
             @tonic_current_scheme :load
             @tonic_previous_scheme []
             @tonic_data_scheme Map.put(%{}, @tonic_current_scheme, [])
+            @tonic_unique_function_id 0
         end
     end
 
@@ -188,19 +189,21 @@ defmodule Tonic do
     #group do: nil
     defmacro group(block) do
         quote do
-            group(unquote(String.to_atom("__tonic_anon__" <> to_string(__CALLER__.line))), fn group -> :erlang.delete_element(1, group) end, unquote(block))
+            group(:__tonic_anon__, fn group -> :erlang.delete_element(1, group) end, unquote(block))
         end
     end
 
     #group :new_group, do: nil
     defmacro group(name, block) do
-        group_func_name = String.to_atom("load_group_" <> to_string(name) <> to_string(__CALLER__.line))
-
         quote do
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ unquote(group_func_name), unquote(name) }|@tonic_data_scheme[@tonic_current_scheme]])
+            group_func_name = String.to_atom("load_group_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
+            @tonic_unique_function_id @tonic_unique_function_id + 1
+
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ group_func_name, unquote(name) }|@tonic_data_scheme[@tonic_current_scheme]])
 
             @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
-            @tonic_current_scheme unquote(group_func_name)
+            @tonic_current_scheme group_func_name
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
 
             unquote(block)
@@ -213,13 +216,15 @@ defmodule Tonic do
 
     #group :new_group, fn { name, value } -> value end, do: nil
     defmacro group(name, fun, block) do
-        group_func_name = String.to_atom("load_group_" <> to_string(name) <> to_string(__CALLER__.line))
-
         quote do
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ unquote(group_func_name), unquote(name), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
+            group_func_name = String.to_atom("load_group_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
+            @tonic_unique_function_id @tonic_unique_function_id + 1
+
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ group_func_name, unquote(name), unquote(Macro.escape(fun)) }|@tonic_data_scheme[@tonic_current_scheme]])
 
             @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
-            @tonic_current_scheme unquote(group_func_name)
+            @tonic_current_scheme group_func_name
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
 
             unquote(block)
