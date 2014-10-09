@@ -18,3 +18,5 @@ To-Do
  * Pass loading off to another module
  * Add specs
  * Convenient types for things like strings
+ * Skips (get data but don't add data to loaded data)
+ * Optionals (can safely get data if it exists or doesn't)
