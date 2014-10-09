@@ -17,3 +17,4 @@ To-Do
  * Automatically use loader on extension and magic number match
  * Pass loading off to another module
  * Add specs
+ * Convenient types for things like strings
