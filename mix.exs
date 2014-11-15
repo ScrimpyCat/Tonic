@@ -27,6 +27,10 @@ defmodule Tonic.Mixfile do
     #
     # Type `mix help deps` for more examples and options
     defp deps do
-        []
+        [
+            { :earmark, "~> 0.1", only: :dev },
+            # { :ex_doc, "~> 0.6", only: :dev }
+            { :ex_doc, git: "https://github.com/ScrimpyCat/ex_doc.git", branch: "macro-specs", only: :dev }
+        ]
     end
 end

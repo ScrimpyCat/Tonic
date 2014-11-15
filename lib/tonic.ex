@@ -1,4 +1,14 @@
 defmodule Tonic do
+    @moduledoc """
+      A DSL for conveniently loading binary data/files.
+    """
+
+    @type block(body) :: [do: body]
+    @type callback :: ({ any, any } -> any)
+    @type ast :: Macro.t
+    @type endianness :: :little | :big | :native
+    @type length :: non_neg_integer | (list -> boolean)
+
     defmacro __using__(_options) do
         quote do
             import Tonic
@@ -12,6 +22,7 @@ defmodule Tonic do
         end
     end
 
+    @doc false
     defp op_name({ _, name }), do: name
     defp op_name({ _, name, _ }), do: name
     defp op_name({ :repeat, _, name, _ }), do: name
@@ -19,16 +30,20 @@ defmodule Tonic do
     defp op_name({ :repeat, _, name, _, _ }), do: name
     defp op_name(_), do: nil
 
+    @doc false
     def var_entry(name, v = { name, _ }), do: v
     def var_entry(name, value), do: { name, value }
 
+    @doc false
     defp fixup_value({ :get, value }), do: quote do: get_value([scope|currently_loaded], unquote(value))
     defp fixup_value({ :get, _, [value] }), do: fixup_value({ :get, value })
     defp fixup_value({ :get, _, [value, fun] }), do: fixup_value({ :get, { value, fun } })
     defp fixup_value(value), do: quote do: unquote(value)
 
+    @doc false
     def callback({ value, data }, fun), do: { fun.(value), data }
 
+    @doc false
     defp create_call({ function }), do: quote do: callback(unquote(function)([scope|currently_loaded], data, nil, endian), fn { _, value } -> value end)
     defp create_call({ function, name }), do: quote do: unquote(function)([scope|currently_loaded], data, unquote(fixup_value(name)), endian)
     defp create_call({ function, name, fun }) when is_function(fun) or is_tuple(fun), do: quote do: callback(unquote(function)([scope|currently_loaded], data, unquote(fixup_value(name)), endian), unquote(fun))
@@ -37,11 +52,13 @@ defmodule Tonic do
     defp create_call({ function, name, endianness, fun }), do: quote do: callback(unquote(function)([scope|currently_loaded], data, unquote(fixup_value(name)), unquote(fixup_value(endianness))), unquote(fun))
     defp create_call({ :repeat, function, name, length, fun }), do: quote do: repeater(unquote({ :&, [], [{ :/, [], [{ function, [], __MODULE__ }, 4] }] }), unquote(fixup_value(length)), [scope|currently_loaded], data, unquote(fixup_value(name)), endian, unquote(fun))
 
+    @doc false
     defp expand_data_scheme([], init_value), do: [quote([do: { unquote(init_value), data }])]
     defp expand_data_scheme(scheme, init_value) do
         [quote([do: loaded = unquote(init_value)]), quote([do: scope = []])|expand_operation(scheme, [quote([do: { loaded, data }])])]
     end
 
+    @doc false
     defp expand_operation([], ops), do: ops
     defp expand_operation([{ :endian, endianness }|scheme], ops), do: expand_operation(scheme, [quote([do: endian = unquote(endianness)])|ops])
     defp expand_operation([op|scheme], ops) do
@@ -69,34 +86,79 @@ defmodule Tonic do
     end
 
     #loading
+    @doc """
+      Loads the binary data using the spec from a given module
+    """
+    @spec load(binary, module) :: { any, binary }
     def load(data, module) when is_binary(data) do
         module.load([], data, nil, :native)
     end
 
+    @doc """
+      Loads the file data using the spec from a given module
+    """
+    @spec load_file(Path.t, module) :: { any, binary }
     def load_file(file, module) do
         { :ok, data } = File.read(file)
         load(data, module)
     end
 
     #get
+    @doc false
     defp get_value([], [], name), do: raise(Tonic.MarkNotFound, name: name)
     defp get_value([scope|loaded], [], name), do: get_value(loaded, scope, name)
     defp get_value(_, [{ name, value }|_], name), do: value
     defp get_value(loaded, [_|vars], name), do: get_value(loaded, vars, name)
 
+    @doc false
     def get_value(loaded, { name, fun }), do: fun.(get_value(loaded, [], name))
     def get_value(loaded, fun) when is_function(fun), do: fun.(loaded)
     def get_value(loaded, name), do: get_value(loaded, [], name)
 
+    #get
+    @doc """
+      Get the loaded value by using either a name to lookup the value, or a function to manually
+      look it up.
+
+
+      **`get(atom) :: any`**  
+      Using a name for the lookup will cause it to search for that matched name in the current 
+      loaded data scope and containing scopes (but not separate branched scopes). If the name
+      is not found, an exception will be raised `Tonic.MarkNotFound`.
+
+      **`get(fun) :: any`**  
+      Using a function for the lookup will cause it to pass the current state to the function.
+      where the function can return the value you want to get.
+
+
+      Examples
+      --------
+        uint8 :length
+        repeat get(:length), :uint8
+
+        uint8 :length
+        repeat get(fn [[{ :length, length }]] -> length end), :uint8
+    """
     #get fn loaded -> 0 end
     #get :value
+    @spec get(atom) :: ast
+    @spec get(fun) :: ast
     defmacro get(name_or_fun) do
         quote do
             { :get, unquote(Macro.escape(name_or_fun)) }
         end
     end
 
+    @doc """
+      Get the loaded value with name, and pass the value into a function.
+
+      Examples
+      --------
+        uint8 :length
+        repeat get(:length, fn length -> length - 1 end)
+    """
     #get :value, fn value -> value end
+    @spec get(atom, fun) :: ast
     defmacro get(name, fun) do
         quote do
             { :get, { unquote(name), unquote(Macro.escape(fun)) } }
@@ -104,7 +166,22 @@ defmodule Tonic do
     end
 
     #endian
+    @doc """
+      Sets the default endianness used by types where endianness is not specified.
+
+      Examples
+      --------
+        endian :little
+        uint32 :value #little endian
+
+        endian :big
+        uint32 :value #big endian
+
+        endian :little
+        uint32 :value, :big #big endian
+    """
     #endian :little
+    @spec endian(endianness) :: ast
     defmacro endian(endianness) do
         quote do
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :endian, unquote(endianness) }|@tonic_data_scheme[@tonic_current_scheme]])
@@ -112,7 +189,28 @@ defmodule Tonic do
     end
 
     #repeat
+    @doc """
+      Repeat the given load operations until it reaches the end.
+
+
+      **`repeat(atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the type as the load operation to be repeated.
+
+      **`repeat(`<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the block as the load operation to be repeated.
+
+
+      Examples
+      --------
+        repeat :uint8
+
+        repeat do
+            uint8 :a
+            uint8 :b
+        end
+    """
     #repeat :type
+    @spec repeat(atom) :: ast
     defmacro repeat(type) when is_atom(type) do
         quote do
             repeat(fn _ -> false end, unquote(type))
@@ -120,13 +218,57 @@ defmodule Tonic do
     end
 
     #repeat do: nil
+    @spec repeat(block(any)) :: ast
     defmacro repeat(block) do
         quote do
             repeat(fn _ -> false end, unquote(block))
         end
     end
 
+    @doc """
+      Repeat the given load operations until it reaches the end or for length.
+
+
+      **`repeat(atom, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the type as the load operation to be repeated. And wraps the output with the given
+      name.
+
+      **`repeat(atom, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the block as the load operation to be repeated. And wraps the output with the given
+      name.
+
+      **`repeat(`<code class="inline"><a href="#t:length/0">length</a></code>`, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the type as the load operation to be repeated. And repeats for length.
+
+      **`repeat(`<code class="inline"><a href="#t:length/0">length</a></code>`, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the block as the load operation to be repeated. And repeats for length.
+
+
+      Examples
+      --------
+        repeat :values, :uint8
+
+        repeat :values do
+            uint8 :a
+            uint8 :b
+        end
+
+        repeat 4, :uint8
+
+        repeat fn _ -> false end, :uint8
+
+        repeat 2 do
+            uint8 :a
+            uint8 :b
+        end
+
+        repeat fn _ -> false end do
+            uint8 :a
+            uint8 :b
+        end
+    """
     #repeat :new_repeat, :type
+    @spec repeat(atom, atom) :: ast
     defmacro repeat(name, type) when is_atom(name) and is_atom(type) do
         quote do
             repeat(unquote(name), fn _ -> false end, unquote(type))
@@ -134,6 +276,7 @@ defmodule Tonic do
     end
 
     #repeat :new_repeat, do: nil
+    @spec repeat(atom, block(any)) :: ast
     defmacro repeat(name, block) when is_atom(name) do
         quote do
             repeat(unquote(name), fn _ -> false end, unquote(block))
@@ -141,6 +284,7 @@ defmodule Tonic do
     end
 
     #repeat times, :type
+    @spec repeat(length, atom) :: ast
     defmacro repeat(length, type) when is_atom(type) do
         quote do
             repeat(:__tonic_anon__, unquote(length), fn { _, value } ->
@@ -150,6 +294,7 @@ defmodule Tonic do
     end
 
     #repeat times, do: nil
+    @spec repeat(length, block(any)) :: ast
     defmacro repeat(length, block) do
         quote do
             repeat(:__tonic_anon__, unquote(length), fn { _, value } ->
@@ -158,7 +303,37 @@ defmodule Tonic do
         end
     end
 
+    @doc """
+      Repeat the given load operations for length.
+
+
+      **`repeat(atom, `<code class="inline"><a href="#t:length/0">length</a></code>`, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the type as the load operation to be repeated. And wraps the output with the given
+      name. Repeats for length.
+
+      **`repeat(atom, `<code class="inline"><a href="#t:length/0">length</a></code>`, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the block as the load operation to be repeated. And wraps the output with the given
+      name. Repeats for length.
+
+
+      Examples
+      --------
+        repeat :values, 4, :uint8
+
+        repeat :values, fn _ -> false end, :uint8
+
+        repeat :values, 4 do
+            uint8 :a
+            uint8 :b
+        end
+
+        repeat :values, fn _ -> false end do
+            uint8 :a
+            uint8 :b
+        end
+    """
     #repeat :new_repeat, times, :type
+    @spec repeat(atom, length, atom) :: ast
     defmacro repeat(name, length, type) when is_atom(type) do
         quote do
             repeat(unquote(name), unquote(length), fn { name, value } ->
@@ -168,6 +343,7 @@ defmodule Tonic do
     end
 
     #repeat :new_repeat, times, do: nil
+    @spec repeat(atom, length, block(any)) :: ast
     defmacro repeat(name, length, block) do
         quote do
             repeat_func_name = String.to_atom("load_repeat_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
@@ -188,7 +364,34 @@ defmodule Tonic do
         end
     end
 
+    @doc """
+      Repeats the load operations for length, passing the result to a callback.
+
+      Examples
+      --------
+        repeat :values, 4, fn result -> result end, :uint8
+
+        repeat :values, 4, fn { name, value } -> value end, :uint8
+
+        repeat :values, fn _ -> false end, fn result -> result end, :uint8
+
+        repeat :values, 4, fn result -> result end do
+            uint8 :a
+            uint8 :b
+        end
+
+        repeat :values, 4, fn { name, value } -> value end do
+            uint8 :a
+            uint8 :b
+        end
+
+        repeat :values, fn _ -> false end, fn result -> result end do
+            uint8 :a
+            uint8 :b
+        end
+    """
     #repeat :new_repeat, times, fn { name, value } -> value end, do: nil
+    @spec repeat(atom, length, callback, block(any)) :: ast
     defmacro repeat(name, length, fun, block) do
         quote do
             repeat_func_name = String.to_atom("load_repeat_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
@@ -209,6 +412,7 @@ defmodule Tonic do
         end
     end
 
+    @doc false
     defp repeater_(_, should_stop, list, _, <<>>, name, _) when is_function(should_stop) or should_stop === nil, do: { { name, :lists.reverse(list) }, <<>> }
     defp repeater_(func, should_stop, list, currently_loaded, data, name, endian) when is_function(should_stop) do
         { value, data } = func.(currently_loaded, data, nil, endian)
@@ -218,17 +422,24 @@ defmodule Tonic do
         end
     end
 
+    @doc false
     defp repeater_(_, 0, list, _, data, name, _), do: { { name, :lists.reverse(list) }, data }
     defp repeater_(func, n, list, currently_loaded, data, name, endian) do
         { value, data } = func.(currently_loaded, data, nil, endian)
         repeater_(func, n - 1, [value|list], currently_loaded, data, name, endian)
     end
 
+    @doc false
     def repeater(func, n, currently_loaded, data, name, endian), do: repeater_(func, n, [], currently_loaded, data, name, endian)
+
+    @doc false
     def repeater(func, n, currently_loaded, data, name, endian, fun) when is_function(fun), do: callback(repeater_(func, n, [], currently_loaded, data, name, endian), fun)
 
 
     #group
+    @doc """
+      Group the given the load data
+    """
     #group do: nil
     defmacro group(block) do
         quote do
@@ -279,6 +490,7 @@ defmodule Tonic do
     end
 
     #type creation
+    @doc false
     defp binary_parameters(type, size, signedness, endianness) do
         {
             :-, [], [
@@ -298,6 +510,9 @@ defmodule Tonic do
         }
     end
 
+    @doc """
+      Declare a new type
+    """
     #type alias of other type
     #type :new_type, :old_type
     defmacro type(name, type) when is_atom(type) do
