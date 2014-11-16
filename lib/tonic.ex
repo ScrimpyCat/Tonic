@@ -61,7 +61,7 @@ defmodule Tonic do
 
     @doc false
     defp expand_operation([], ops), do: ops
-    defp expand_operation([{ :endian, endianness }|scheme], ops), do: expand_operation(scheme, [quote([do: endian = unquote(endianness)])|ops])
+    defp expand_operation([{ :endian, endianness }|scheme], ops), do: expand_operation(scheme, [quote([do: endian = unquote(fixup_value(endianness))])|ops])
     defp expand_operation([op|scheme], ops) do
         expand_operation(scheme, [
             quote([do: { value, data } = unquote(create_call(op))]),
