@@ -143,7 +143,7 @@ defmodule Tonic do
     #get fn loaded -> 0 end
     #get :value
     @spec get(atom) :: ast
-    @spec get(fun) :: ast
+    @spec get((list -> any)) :: ast
     defmacro get(name_or_fun) do
         quote do
             { :get, unquote(Macro.escape(name_or_fun)) }
@@ -159,7 +159,7 @@ defmodule Tonic do
         repeat get(:length, fn length -> length - 1 end)
     """
     #get :value, fn value -> value end
-    @spec get(atom, fun) :: ast
+    @spec get(atom, (list -> any)) :: ast
     defmacro get(name, fun) do
         quote do
             { :get, { unquote(name), unquote(Macro.escape(fun)) } }
