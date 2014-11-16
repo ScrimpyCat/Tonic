@@ -7,6 +7,7 @@ defmodule Tonic do
     @type callback :: ({ any, any } -> any)
     @type ast :: Macro.t
     @type endianness :: :little | :big | :native
+    @type signedness :: :signed | :unsigned
     @type length :: non_neg_integer | (list -> boolean)
 
     defmacro __using__(_options) do
@@ -438,16 +439,35 @@ defmodule Tonic do
 
     #group
     @doc """
-      Group the given the load data
+      Group the load operations.
+
+      Examples
+      --------
+        group do
+            uint8 :a
+            uint8 :b
+        end
     """
     #group do: nil
+    @spec group(block(any)) :: ast
     defmacro group(block) do
         quote do
             group(:__tonic_anon__, fn group -> :erlang.delete_element(1, group) end, unquote(block))
         end
     end
 
+    @doc """
+      Group the load operations, wrapping them with the given name.
+
+      Examples
+      --------
+        group :values do
+            uint8 :a
+            uint8 :b
+        end 
+    """
     #group :new_group, do: nil
+    @spec group(atom, block(any)) :: ast
     defmacro group(name, block) do
         quote do
             group_func_name = String.to_atom("load_group_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
@@ -468,7 +488,18 @@ defmodule Tonic do
         end
     end
 
+    @doc """
+      Group the load operations, wrapping them with the given name and passing the result to a callback.
+
+      Examples
+      --------
+        group :values, fn { _, value } -> value end do
+            uint8 :a
+            uint8 :b
+        end 
+    """
     #group :new_group, fn { name, value } -> value end, do: nil
+    @spec group(atom, callback, block(any)) :: ast
     defmacro group(name, fun, block) do
         quote do
             group_func_name = String.to_atom("load_group_" <> to_string(unquote(name)) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
@@ -511,10 +542,40 @@ defmodule Tonic do
     end
 
     @doc """
-      Declare a new type
+      Declare a new type as an alias of another type or of a function.
+
+
+      **`type(atom, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Create the new type as an alias of another type.
+
+      **`type(atom, (binary, atom, ` <code class="inline"><a href="#t:endianness/0">endianness</a></code> ` -> { any, binary })) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Implement the type as a function. 
+
+
+      Examples
+      --------
+        type :myint8, :int8
+
+        type :myint8, fn data, name, _ ->
+            <<value :: integer-size(8)-signed, data :: binary>> data
+            { { name, value }, data }
+        end
+
+        type :myint16, fn 
+            data, name, :little ->
+                <<value :: integer-size(16)-signed-little, data :: binary>> = data
+                { { name, value }, data }
+            data, name, :big ->
+                <<value :: integer-size(16)-signed-big, data :: binary>> = data
+                { { name, value }, data }
+            data, name, :native ->
+                <<value :: integer-size(16)-signed-native, data :: binary>> = data
+                { { name, value }, data }
+        end
     """
     #type alias of other type
     #type :new_type, :old_type
+    @spec type(atom, atom) :: ast
     defmacro type(name, type) when is_atom(type) do
         quote do
             defmacro unquote(name)() do
@@ -547,6 +608,7 @@ defmodule Tonic do
 
     #type with function
     #type :new_type, fn data, name, endian -> { nil, data } end
+    @spec type(atom, (binary, atom, endianness -> { any, binary })) :: ast
     defmacro type(name, fun) do
         quote do
             defmacro unquote(name)() do
@@ -577,8 +639,16 @@ defmodule Tonic do
         end
     end
 
+    @doc """
+      Declare a new type as an alias of another type with an overriding (fixed) endianness.
+
+      Examples
+      --------
+        type :mylittleint16, :int16, :little
+    """
     #type alias of other type, overriding endianness
     #type :new_type, :old_type, :little
+    @spec type(atom, atom, endianness) :: ast
     defmacro type(name, type, endianness) do
         quote do
             defmacro unquote(name)() do
@@ -609,8 +679,16 @@ defmodule Tonic do
         end
     end
 
+    @doc """
+      Declare a new type for a binary type of size with signedness (if used).
+
+      Examples
+      --------
+        type :myint16, :integer, 16, :signed
+    """
     #type with binary type, size, and signedness. applies to all endian types
-    #type :new_type, :integer, :32, :signed
+    #type :new_type, :integer, 32, :signed
+    @spec type(atom, atom, non_neg_integer, signedness) :: ast
     defmacro type(name, type, size, signedness) do
         quote do
             defmacro unquote(name)() do
@@ -654,8 +732,17 @@ defmodule Tonic do
         end
     end
 
+    @doc """
+      Declare a new type for a binary type of size with signedness (if used) and a overriding
+      (fixed) endianness.
+
+      Examples
+      --------
+        type :mylittleint16, :integer, 16, :signed, :little
+    """
     #type with binary type, size, signedness, and endianness
     #type :new_type, :integer, :32, :signed, :little
+    @spec type(atom, atom, non_neg_integer, signedness, endianness) :: ast
     defmacro type(name, type, size, signedness, endianness) do
         quote do
             defmacro unquote(name)() do
