@@ -792,6 +792,49 @@ defmodule Tonic.Types do
 
     type :float32, :float, 32, :signed
     type :float64, :float, 64, :signed
+
+
+    defp list_to_string_drop_last_value(values, string \\ "")
+    defp list_to_string_drop_last_value([], string), do: string
+    defp list_to_string_drop_last_value([_], string), do: string
+    defp list_to_string_drop_last_value([{ c }|values], string), do: list_to_string_drop_last_value(values, string <> <<c>>)
+
+    def convert_to_string_without_last_byte({ name, values }), do: { name, list_to_string_drop_last_value(values) }
+
+    def convert_to_string({ name, values }), do: { name, List.foldl(values, "", fn { c }, s -> s <> <<c>> end)}
+
+    defmacro string(name, options \\ [])
+    defmacro string(name, terminator) when is_integer(terminator), do: quote do: string(unquote(name), terminator: unquote(terminator))
+    defmacro string(name, [terminator: terminator]) do
+        quote do
+            repeat unquote(name), fn [{ c }|_] -> c == unquote(terminator) end, &convert_to_string_without_last_byte/1, do: uint8
+        end
+    end
+
+    defmacro string(name, [length: length]) do
+        quote do
+            repeat unquote(name), unquote(length), &convert_to_string/1, do: uint8
+        end
+    end
+
+    defmacro string(name, []) do
+        quote do
+            repeat unquote(name), fn _ -> false end, &convert_to_string/1, do: uint8
+        end
+    end
+
+    defmacro string(name, options) do
+        quote do
+            repeat unquote(name), fn chars = [{ c }|_] ->
+                c == unquote(options[:terminator]) or length(chars) == unquote(options[:length]) #todo: should change repeat step callback to pass in the length too
+            end, fn charlist = { _, values } ->
+                case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
+                    { unquote(options[:terminator]) } -> convert_to_string_without_last_byte(charlist)
+                    _ -> convert_to_string(charlist)
+                end
+            end, do: uint8
+        end
+    end
 end
 
 defmodule Tonic.MarkNotFound do

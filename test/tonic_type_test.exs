@@ -69,7 +69,7 @@ defmodule TonicTypeTest do
         single_type(:uint64, 0xffffffffffffffff, :integer, 64, :unsigned)
 
         single_type(:float32, 0.5, :float, 32)
-        single_type(:float64, 0.5, :float, 64) 
+        single_type(:float64, 0.5, :float, 64)
     end
 
     defmodule CustomTypes do
