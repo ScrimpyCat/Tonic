@@ -62,6 +62,20 @@ defmodule Tonic do
     @doc false
     defp expand_operation([], ops), do: ops
     defp expand_operation([{ :endian, endianness }|scheme], ops), do: expand_operation(scheme, [quote([do: endian = unquote(fixup_value(endianness))])|ops])
+    defp expand_operation([{ :on, :match, match }|scheme], ops), do: expand_operation(scheme, [[match], { :__block__, [], ops }])
+    defp expand_operation([{ :on, :end }|scheme], ops) do
+        { matches, [{ :on, condition }|scheme] } = Enum.split_while(scheme, fn
+            { :on, condition } -> false
+            _ -> true
+        end)
+        expand_operation(scheme, [quote do
+            case unquote(fixup_value(condition)) do
+                unquote(Enum.chunk(matches, 2) |> Enum.map(fn branch ->
+                    { :->, [], expand_operation(branch, []) }
+                end) |> Enum.reverse)
+            end
+        end|ops])
+    end
     defp expand_operation([op|scheme], ops) do
         expand_operation(scheme, [
             quote([do: { value, data } = unquote(create_call(op))]),
@@ -72,14 +86,7 @@ defmodule Tonic do
 
     defmacro __before_compile__(env) do
         quote do
-            unquote({ :__block__, [], Map.keys(Module.get_attribute(env.module, :tonic_data_scheme)) |> Enum.map(fn
-                scheme = { :on, func_name, match } -> #load_on_
-                    { :def, [context: __MODULE__, import: Kernel], [
-                            { func_name, [context: __MODULE__], [{ :currently_loaded, [], __MODULE__ }, { :data, [], __MODULE__ }, match, { :endian, [], __MODULE__ }] },
-                            [do: { :__block__, [], expand_data_scheme(Module.get_attribute(env.module, :tonic_data_scheme)[scheme], quote(do: {})) }]
-                        ]
-                    }
-                scheme ->
+            unquote({ :__block__, [], Map.keys(Module.get_attribute(env.module, :tonic_data_scheme)) |> Enum.map(fn scheme ->
                     { :def, [context: __MODULE__, import: Kernel], [
                             { scheme, [context: __MODULE__], [{ :currently_loaded, [], __MODULE__ }, { :data, [], __MODULE__ }, { :name, [], __MODULE__ }, { :endian, [], __MODULE__ }] },
                             [do: { :__block__, [], expand_data_scheme(Module.get_attribute(env.module, :tonic_data_scheme)[scheme], case to_string(scheme) do
@@ -180,24 +187,16 @@ defmodule Tonic do
     @spec on(term, [do: [{ :->, any, any }]]) :: ast
     defmacro on(condition, [do: clauses]) do
         quote do
-            on_func_name = String.to_atom("load_on_" <> to_string(:__tonic_anon__) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
-            @tonic_unique_function_id @tonic_unique_function_id + 1
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, unquote(Macro.escape(condition)) }|@tonic_data_scheme[@tonic_current_scheme]])
 
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ on_func_name, unquote(Macro.escape(condition)) }|@tonic_data_scheme[@tonic_current_scheme]])
-
-            unquote({ :__block__, [], Enum.map(clauses, fn { :->, _, [[match]|args] } -> 
+            unquote({ :__block__, [], Enum.map(clauses, fn { :->, _, [[match]|args] } ->
                 quote do
-                    @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
-                    @tonic_current_scheme { :on, on_func_name, unquote(Macro.escape(match)) }
-                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
-
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, :match, unquote(Macro.escape(match)) }|@tonic_data_scheme[@tonic_current_scheme]])
                     unquote({ :__block__, [], args })
-
-                    [current|previous] = @tonic_previous_scheme
-                    @tonic_previous_scheme previous
-                    @tonic_current_scheme current
                 end
             end) })
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, :end }|@tonic_data_scheme[@tonic_current_scheme]])
         end
     end
 
