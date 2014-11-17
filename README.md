@@ -13,7 +13,6 @@ It is currently a work in progress, and as it stands isn't particularly useful a
 To-Do
 -----
 
- * Conditionals
  * Automatically use loader on extension and magic number match
  * Pass loading off to another module
  * Convenient types
