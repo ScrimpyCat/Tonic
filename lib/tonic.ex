@@ -833,11 +833,46 @@ defmodule Tonic.Types do
     defp list_to_string_drop_last_value([_], string), do: string
     defp list_to_string_drop_last_value([{ c }|values], string), do: list_to_string_drop_last_value(values, string <> <<c>>)
 
-    def convert_to_string_without_last_byte({ name, values }), do: { name, list_to_string_drop_last_value(values) }
+    def convert_to_string_without_last_byte({ name, values }), do: { name, convert_to_string_without_last_byte(values) }
+    def convert_to_string_without_last_byte(values), do: list_to_string_drop_last_value(values)
 
-    def convert_to_string({ name, values }), do: { name, List.foldl(values, "", fn { c }, s -> s <> <<c>> end)}
+    def convert_to_string({ name, values }), do: { name, convert_to_string(values) }
+    def convert_to_string(values), do: List.foldl(values, "", fn { c }, s -> s <> <<c>> end)
 
-    defmacro string(name, options \\ [])
+    defmacro string(name \\ [], options \\ [])
+    defmacro string(terminator, []) when is_integer(terminator), do: quote do: string(terminator: unquote(terminator))
+
+    defmacro string([terminator: terminator], []) do
+        quote do
+            repeat nil, fn [{ c }|_] -> c == unquote(terminator) end, fn { _, values } -> convert_to_string_without_last_byte(values) end, do: uint8
+        end
+    end
+
+    defmacro string([length: length], []) do
+        quote do
+            repeat nil, unquote(length), fn { _, values } -> convert_to_string(values) end, do: uint8
+        end
+    end
+
+    defmacro string([], []) do
+        quote do
+            repeat nil, fn _ -> false end, fn { _, values } -> convert_to_string(values) end, do: uint8
+        end
+    end
+
+    defmacro string(options, []) when is_list(options) do
+        quote do
+            repeat nil, fn chars = [{ c }|_] ->
+                c == unquote(options[:terminator]) or length(chars) == unquote(options[:length]) #todo: should change repeat step callback to pass in the length too
+            end, fn { _, values } ->
+                case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
+                    { unquote(options[:terminator]) } -> convert_to_string_without_last_byte(values)
+                    _ -> convert_to_string(values)
+                end
+            end, do: uint8
+        end
+    end
+
     defmacro string(name, terminator) when is_integer(terminator), do: quote do: string(unquote(name), terminator: unquote(terminator))
     defmacro string(name, [terminator: terminator]) do
         quote do
