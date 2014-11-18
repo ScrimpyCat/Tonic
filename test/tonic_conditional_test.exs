@@ -8,7 +8,7 @@ defmodule TonicConitionalTests do
             1 -> uint32
             2 -> float32
         end
-        
+
         test "simple on statement" do
             assert { { { :type, 2 }, 2.5 }, <<>> } == Tonic.load(<<2, 2.5 :: float-size(32)-native>>, __MODULE__)
         end
@@ -25,7 +25,7 @@ defmodule TonicConitionalTests do
             2 -> endian :big
         end
         float32
-        
+
         test "correct scoping for on statement" do
             assert { { { :type, 2 }, 2.5 }, <<>> } == Tonic.load(<<2 :: integer-size(32)-little, 2.5 :: float-size(32)-big>>, __MODULE__)
         end
@@ -45,7 +45,7 @@ defmodule TonicConitionalTests do
                 end
             2 -> float32
         end
-        
+
         test "multiline statement" do
             assert { { 1, 15, 123, { 2.5 } }, <<>> } == Tonic.load(<<
                 1, 
@@ -53,6 +53,24 @@ defmodule TonicConitionalTests do
                     123 :: integer-size(32)-native,
                     2.5 :: float-size(32)-native
             >>, __MODULE__)
+        end
+    end
+
+    defmodule OnGuards do
+        use ExUnit.Case
+        use Tonic
+
+        uint8 :type, fn
+            { _, 1 } -> 1
+            { _, 2 } -> :float
+        end
+        on get(:type) do
+            a when is_integer(a) -> uint32
+            b when is_atom(b) -> float32
+        end
+
+        test "on statement with guards" do
+            assert { { :float, 2.5 }, <<>> } == Tonic.load(<<2, 2.5 :: float-size(32)-native>>, __MODULE__)
         end
     end
 end
