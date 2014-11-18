@@ -70,8 +70,11 @@ defmodule Tonic do
         end)
         expand_operation(scheme, [quote do
             case unquote(fixup_value(condition)) do
-                unquote(Enum.chunk(matches, 2) |> Enum.map(fn branch ->
-                    { :->, [], expand_operation(branch, []) }
+                unquote(Enum.chunk_by(matches, fn
+                    { :on, :match, _ } -> true
+                    _ -> false
+                end) |> Enum.chunk(2) |> Enum.map(fn [branch, match|_] ->
+                    { :->, [], expand_operation(branch ++ match, []) }
                 end) |> Enum.reverse)
             end
         end|ops])
