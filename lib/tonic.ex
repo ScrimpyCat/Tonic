@@ -868,10 +868,16 @@ defmodule Tonic.Types do
             repeat nil, fn chars = [{ c }|_] ->
                 c == unquote(options[:terminator]) or length(chars) == unquote(options[:length]) #todo: should change repeat step callback to pass in the length too
             end, fn { _, values } ->
-                case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
+                str = case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
                     { unquote(options[:terminator]) } -> convert_to_string_without_last_byte(values)
                     _ -> convert_to_string(values)
                 end
+
+                unquote(if options[:strip] != nil do
+                    quote do: String.rstrip(str, unquote(options[:strip]))
+                else
+                    quote do: str
+                end)
             end, do: uint8
         end
     end
@@ -900,10 +906,16 @@ defmodule Tonic.Types do
             repeat unquote(name), fn chars = [{ c }|_] ->
                 c == unquote(options[:terminator]) or length(chars) == unquote(options[:length]) #todo: should change repeat step callback to pass in the length too
             end, fn charlist = { _, values } ->
-                case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
+                { name, str } = case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
                     { unquote(options[:terminator]) } -> convert_to_string_without_last_byte(charlist)
                     _ -> convert_to_string(charlist)
                 end
+
+                { name, unquote(if options[:strip] != nil do
+                    quote do: String.rstrip(str, unquote(options[:strip]))
+                else
+                    quote do: str
+                end) }
             end, do: uint8
         end
     end
