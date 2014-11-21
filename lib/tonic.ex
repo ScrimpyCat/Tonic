@@ -62,10 +62,25 @@ defmodule Tonic do
     @doc false
     defp expand_operation([], ops), do: ops
     defp expand_operation([{ :endian, endianness }|scheme], ops), do: expand_operation(scheme, [quote([do: endian = unquote(fixup_value(endianness))])|ops])
+    defp expand_operation([{ :optional, :end }|scheme], ops) do
+        { optional, [{ :optional }|scheme] } = Enum.split_while(scheme, fn
+            { :optional } -> false
+            _ -> true
+        end)
+
+        expand_operation(scheme, [quote do
+            { loaded, scope, data } = try do
+                unquote_splicing(expand_operation(optional, []))
+                { loaded, scope, data }
+            rescue
+                _ in MatchError -> { loaded, scope, data }
+            end
+        end|ops])
+    end
     defp expand_operation([{ :on, :match, match }|scheme], ops), do: expand_operation(scheme, [[match], { :__block__, [], ops }])
     defp expand_operation([{ :on, :end }|scheme], ops) do
         { matches, [{ :on, condition }|scheme] } = Enum.split_while(scheme, fn
-            { :on, condition } -> false
+            { :on, _ } -> false
             _ -> true
         end)
         expand_operation(scheme, [quote do
@@ -236,6 +251,25 @@ defmodule Tonic do
             [current|previous] = @tonic_previous_scheme
             @tonic_previous_scheme previous
             @tonic_current_scheme current
+        end
+    end
+
+    #optional
+    @doc """
+    """
+    defmacro optional(type) when is_atom(type) do
+        quote do
+            optional([do: unquote(type)()])
+        end
+    end
+
+    defmacro optional(block) do
+        quote do
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :optional }|@tonic_data_scheme[@tonic_current_scheme]])
+
+            unquote(block)
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :optional, :end }|@tonic_data_scheme[@tonic_current_scheme]])
         end
     end
 
