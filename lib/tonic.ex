@@ -79,6 +79,11 @@ defmodule Tonic do
             end
         end|ops])
     end
+    defp expand_operation([{ :skip, op }|scheme], ops) do
+        expand_operation(scheme, [
+            quote([do: { _, data } = unquote(create_call(op))])
+        |ops])
+    end
     defp expand_operation([op|scheme], ops) do
         expand_operation(scheme, [
             quote([do: { value, data } = unquote(create_call(op))]),
@@ -94,6 +99,7 @@ defmodule Tonic do
                             { scheme, [context: __MODULE__], [{ :currently_loaded, [], __MODULE__ }, { :data, [], __MODULE__ }, { :name, [], __MODULE__ }, { :endian, [], __MODULE__ }] },
                             [do: { :__block__, [], expand_data_scheme(Module.get_attribute(env.module, :tonic_data_scheme)[scheme], case to_string(scheme) do
                                 <<"load_group_", _ :: binary>> -> quote do: { name }
+                                <<"load_skip_", _ :: binary>> -> quote do: { name }
                                 _ -> quote do: {} #load, load_repeat_
                             end) }]
                         ]
@@ -200,6 +206,36 @@ defmodule Tonic do
             end) })
 
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, :end }|@tonic_data_scheme[@tonic_current_scheme]])
+        end
+    end
+
+    #skip
+    @doc """
+
+    """
+    defmacro skip(type) when is_atom(type) do
+        quote do
+            skip([do: unquote(type)()])
+        end
+    end
+
+    defmacro skip(block) do
+        quote do
+            skip_func_name = String.to_atom("load_skip_" <> to_string(:__tonic_anon__) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
+            @tonic_unique_function_id @tonic_unique_function_id + 1
+
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :skip, { skip_func_name, :__tonic_anon__ } }|@tonic_data_scheme[@tonic_current_scheme]])
+
+            @tonic_previous_scheme [@tonic_current_scheme|@tonic_previous_scheme]
+            @tonic_current_scheme skip_func_name
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [])
+
+            unquote(block)
+
+            [current|previous] = @tonic_previous_scheme
+            @tonic_previous_scheme previous
+            @tonic_current_scheme current
         end
     end
 
