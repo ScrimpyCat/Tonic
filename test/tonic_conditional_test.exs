@@ -1,4 +1,4 @@
-defmodule TonicConitionalTests do
+defmodule TonicConditionalTests do
     defmodule SimpleOn do
         use ExUnit.Case
         use Tonic
