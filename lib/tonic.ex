@@ -228,12 +228,16 @@ defmodule Tonic do
     @doc """
 
     """
+    #skip :type
+    @spec skip(atom) :: ast
     defmacro skip(type) when is_atom(type) do
         quote do
             skip([do: unquote(type)()])
         end
     end
 
+    #skip do: nil
+    @spec skip(block(any)) :: ast
     defmacro skip(block) do
         quote do
             skip_func_name = String.to_atom("load_skip_" <> to_string(:__tonic_anon__) <> "_" <> to_string(unquote(__CALLER__.line)) <> "_" <> to_string(@tonic_unique_function_id))
@@ -257,12 +261,16 @@ defmodule Tonic do
     #optional
     @doc """
     """
+    #optional :type
+    @spec optional(atom) :: ast
     defmacro optional(type) when is_atom(type) do
         quote do
             optional([do: unquote(type)()])
         end
     end
 
+    #optional do: nil
+    @spec optional(block(any)) :: ast
     defmacro optional(block) do
         quote do
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :optional }|@tonic_data_scheme[@tonic_current_scheme]])
