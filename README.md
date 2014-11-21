@@ -16,6 +16,6 @@ To-Do
  * Automatically use loader on extension and magic number match
  * Pass loading off to another module
  * Convenient types
- * Optionals (can safely get data if it exists or doesn't)
+ * Ability to seek certain points in the data
  * Change repeat step callback to pass in current length
  * Add a repeat/5 where you can pass in the option whether the list should be reversed or not
