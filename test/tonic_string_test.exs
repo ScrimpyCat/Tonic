@@ -39,7 +39,7 @@ defmodule TonicStringTests do
         string :name, length: 5, terminator: ?\n
         string :name, length: 5, terminator: ?\n
 
-        test "string with length" do
+        test "string with length or null terminator" do
             assert { { { :name, "1234" }, { :name, "56789" } }, <<"\n">> } == Tonic.load(<<"1234\n56789\n">>, __MODULE__)
         end
     end
@@ -96,7 +96,7 @@ defmodule TonicStringTests do
         string length: 5, terminator: ?\n
         string length: 5, terminator: ?\n
 
-        test "unnamed string with length" do
+        test "unnamed string with length or null terminator" do
             assert { { "1234", "56789" }, <<"\n">> } == Tonic.load(<<"1234\n56789\n">>, __MODULE__)
         end
     end
