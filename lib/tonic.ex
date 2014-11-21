@@ -206,7 +206,15 @@ defmodule Tonic do
 
     #on
     @doc """
+      Executes the given load operations of a particular clause that matches the condition.
 
+      Examples
+      --------
+        uint8 :type
+        on get(:type) do
+            1 -> uint32 :value
+            2 -> float32 :value
+        end
     """
     @spec on(term, [do: [{ :->, any, any }]]) :: ast
     defmacro on(condition, [do: clauses]) do
@@ -226,7 +234,26 @@ defmodule Tonic do
 
     #skip
     @doc """
+      Skip the given load operations.
 
+      Executes the load operations but doesn't return the loaded data.
+
+
+      **`skip(atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Skip the given type.
+
+      **`skip(`<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Skip the given block.
+
+
+      Example
+      -------
+        skip :uint8
+
+        skip do
+            uint8 :a
+            uint8 :b
+        end
     """
     #skip :type
     @spec skip(atom) :: ast
@@ -260,6 +287,31 @@ defmodule Tonic do
 
     #optional
     @doc """
+      Optionally execute the given load operations.
+
+      Usually if the current data does not match what is trying to be loaded, a match error
+      will be raised and the data will not be loaded successfully. Using `optional` is a way
+      to avoid that. If there is a match error the load operations it attempted to execute
+      will be skipped, and it will continue on with the rest of the data spec. If there
+      isn't a match error then the load operations that were attempted will be combined with
+      the current loaded data.
+
+
+      **`optional(atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Optionally load the given type.
+
+      **`optional(`<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Optionally load the given block.
+
+
+      Example
+      -------
+        optional :uint8
+
+        optional do
+            uint8 :a
+            uint8 :b
+        end
     """
     #optional :type
     @spec optional(atom) :: ast
