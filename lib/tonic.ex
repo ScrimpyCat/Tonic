@@ -74,6 +74,7 @@ defmodule Tonic do
                 { loaded, scope, data }
             rescue
                 _ in MatchError -> { loaded, scope, data }
+                _ in CaseClauseError -> { loaded, scope, data }
             end
         end|ops])
     end
