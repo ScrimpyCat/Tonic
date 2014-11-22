@@ -56,4 +56,38 @@ defmodule TonicOptionalTests do
             assert { { 1, 3 }, <<>> } == Tonic.load(<<1, 3>>, __MODULE__)
         end
     end
+
+    defmodule OptionalConditionalSuccess do
+        use ExUnit.Case
+        use Tonic
+
+        uint8 :type, fn { _, value } -> value end
+        optional do
+            on get(:type) do
+                1 -> uint8
+            end
+        end
+        uint8
+
+        test "optional conditional that succeeds" do
+            assert { { 1, 2, 3 }, <<>> } == Tonic.load(<<1, 2, 3>>, __MODULE__)
+        end
+    end
+
+    defmodule OptionalConditionalMissingClause do
+        use ExUnit.Case
+        use Tonic
+
+        uint8 :type, fn { _, value } -> value end
+        optional do
+            on get(:type) do
+                :missing -> uint8
+            end
+        end
+        uint8
+
+        test "optional conditional that fails to match" do
+            assert { { 1, 2 }, <<3>> } == Tonic.load(<<1, 2, 3>>, __MODULE__)
+        end
+    end
 end
