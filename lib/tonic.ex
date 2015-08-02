@@ -36,10 +36,10 @@ defmodule Tonic do
     def var_entry(name, value), do: { name, value }
 
     @doc false
-    defp fixup_value({ :get, value }), do: quote do: get_value([scope|currently_loaded], unquote(value))
-    defp fixup_value({ :get, _, [value] }), do: fixup_value({ :get, value })
-    defp fixup_value({ :get, _, [value, fun] }), do: fixup_value({ :get, { value, fun } })
-    defp fixup_value(value), do: quote do: unquote(value)
+    def fixup_value({ :get, value }), do: quote do: get_value([scope|currently_loaded], unquote(value))
+    def fixup_value({ :get, _, [value] }), do: fixup_value({ :get, value })
+    def fixup_value({ :get, _, [value, fun] }), do: fixup_value({ :get, { value, fun } })
+    def fixup_value(value), do: quote do: unquote(value)
 
     @doc false
     def callback({ value, data }, fun), do: { fun.(value), data }
@@ -1041,7 +1041,7 @@ defmodule Tonic.Types do
 
     defmacro string([terminator: terminator], []) do
         quote do
-            repeat nil, fn [{ c }|_] -> c == unquote(terminator) end, fn { _, values } -> convert_to_string_without_last_byte(values) end, do: uint8
+            repeat nil, fn [{ c }|_] -> c == unquote(fixup_value(terminator)) end, fn { _, values } -> convert_to_string_without_last_byte(values) end, do: uint8
         end
     end
 
@@ -1060,15 +1060,15 @@ defmodule Tonic.Types do
     defmacro string(options, []) when is_list(options) do
         quote do
             repeat nil, fn chars = [{ c }|_] ->
-                c == unquote(options[:terminator]) or length(chars) == unquote(options[:length]) #todo: should change repeat step callback to pass in the length too
+                c == unquote(fixup_value(options[:terminator])) or length(chars) == unquote(fixup_value(options[:length])) #todo: should change repeat step callback to pass in the length too
             end, fn { _, values } ->
                 str = case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
-                    { unquote(options[:terminator]) } -> convert_to_string_without_last_byte(values)
+                    { unquote(fixup_value(options[:terminator])) } -> convert_to_string_without_last_byte(values)
                     _ -> convert_to_string(values)
                 end
 
                 unquote(if options[:strip] != nil do
-                    quote do: String.rstrip(str, unquote(options[:strip]))
+                    quote do: String.rstrip(str, unquote(fixup_value(options[:strip])))
                 else
                     quote do: str
                 end)
@@ -1079,7 +1079,7 @@ defmodule Tonic.Types do
     defmacro string(name, terminator) when is_integer(terminator), do: quote do: string(unquote(name), terminator: unquote(terminator))
     defmacro string(name, [terminator: terminator]) do
         quote do
-            repeat unquote(name), fn [{ c }|_] -> c == unquote(terminator) end, &convert_to_string_without_last_byte/1, do: uint8
+            repeat unquote(name), fn [{ c }|_] -> c == unquote(fixup_value(terminator)) end, &convert_to_string_without_last_byte/1, do: uint8
         end
     end
 
@@ -1098,15 +1098,15 @@ defmodule Tonic.Types do
     defmacro string(name, options) do
         quote do
             repeat unquote(name), fn chars = [{ c }|_] ->
-                c == unquote(options[:terminator]) or length(chars) == unquote(options[:length]) #todo: should change repeat step callback to pass in the length too
+                c == unquote(fixup_value(options[:terminator])) or length(chars) == unquote(fixup_value(options[:length])) #todo: should change repeat step callback to pass in the length too
             end, fn charlist = { _, values } ->
                 { name, str } = case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
-                    { unquote(options[:terminator]) } -> convert_to_string_without_last_byte(charlist)
+                    { unquote(fixup_value(options[:terminator])) } -> convert_to_string_without_last_byte(charlist)
                     _ -> convert_to_string(charlist)
                 end
 
                 { name, unquote(if options[:strip] != nil do
-                    quote do: String.rstrip(str, unquote(options[:strip]))
+                    quote do: String.rstrip(str, unquote(fixup_value(options[:strip])))
                 else
                     quote do: str
                 end) }
