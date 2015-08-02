@@ -78,6 +78,24 @@ defmodule Tonic do
             end
         end|ops])
     end
+    defp expand_operation([{ :chunk, id, :end }|scheme], ops) do
+        { match, _ } = Code.eval_quoted(quote([do: fn
+            { :chunk, _, :end } -> true
+            { :chunk, unquote(id), _ } -> false
+            _ -> true
+        end]))
+
+        { chunk, [{ :chunk, _, length }|scheme] } = Enum.split_while(scheme, match)
+
+        expand_operation(scheme, [quote do
+            size = unquote(fixup_value(length))
+            unquote({ String.to_atom("next_data" <> to_string(id)), [], __MODULE__ }) = binary_part(data, size, byte_size(data) - size)
+            data = binary_part(data, 0, size)
+        end|[quote do
+            unquote_splicing(expand_operation(chunk, []))
+            { loaded, scope, data }
+        end|[quote([do: data = unquote({ String.to_atom("next_data" <> to_string(id)), [], __MODULE__ })])|ops]]])
+    end
     defp expand_operation([{ :on, :match, match }|scheme], ops), do: expand_operation(scheme, [[match], { :__block__, [], ops }])
     defp expand_operation([{ :on, :end }|scheme], ops) do
         { matches, [{ :on, condition }|scheme] } = Enum.split_while(scheme, fn
@@ -230,6 +248,43 @@ defmodule Tonic do
             end) })
 
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, :end }|@tonic_data_scheme[@tonic_current_scheme]])
+        end
+    end
+
+    #chunk
+    @doc """
+      Extract a chunk of data for processing.
+
+      Executes the load operations only on the given chunk.
+
+
+      **`chunk(`<code class="inline"><a href="#t:length/0">length</a></code>`, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      Uses the block as the load operation on the chunk of length.
+
+
+      Example
+      -------
+        chunk 4 do
+            uint8 :a
+            uint8 :b
+        end
+
+        chunk 4 do
+            repeat :uint8
+        end
+    """
+    #chunk 4, do: nil
+    @spec chunk(length, block(any)) :: ast
+    defmacro chunk(length, block) do
+        quote do
+            chunk_id = @tonic_unique_function_id
+            @tonic_unique_function_id @tonic_unique_function_id + 1
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :chunk, chunk_id, unquote(Macro.escape(length)) }|@tonic_data_scheme[@tonic_current_scheme]])
+
+            unquote(block)
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :chunk, chunk_id, :end }|@tonic_data_scheme[@tonic_current_scheme]])
         end
     end
 
