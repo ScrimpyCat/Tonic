@@ -96,18 +96,23 @@ defmodule Tonic do
             { loaded, scope, data }
         end|[quote([do: data = unquote({ String.to_atom("next_data" <> to_string(id)), [], __MODULE__ })])|ops]]])
     end
-    defp expand_operation([{ :on, :match, match }|scheme], ops), do: expand_operation(scheme, [[match], { :__block__, [], ops }])
-    defp expand_operation([{ :on, :end }|scheme], ops) do
-        { matches, [{ :on, condition }|scheme] } = Enum.split_while(scheme, fn
-            { :on, _ } -> false
+    defp expand_operation([{ :on, _, :match, match }|scheme], ops), do: expand_operation(scheme, [[match], { :__block__, [], ops }])
+    defp expand_operation([{ :on, id, :end }|scheme], ops) do
+        { fun, _ } = Code.eval_quoted(quote([do: fn
+            { :on, unquote(id), _ } -> false
             _ -> true
-        end)
+        end]))
+
+        { matches, [{ :on, _, condition }|scheme] } = Enum.split_while(scheme, fun)
+
+        { fun, _ } = Code.eval_quoted(quote([do: fn
+            { :on, unquote(id), :match, _ } -> true
+            _ -> false
+        end]))
+
         expand_operation(scheme, [quote do
             case unquote(fixup_value(condition)) do
-                unquote(Enum.chunk_by(matches, fn
-                    { :on, :match, _ } -> true
-                    _ -> false
-                end) |> Enum.chunk(2) |> Enum.map(fn [branch, match|_] ->
+                unquote(Enum.chunk_by(matches, fun) |> Enum.chunk(2) |> Enum.map(fn [branch, match|_] ->
                     { :->, [], expand_operation(branch ++ match, []) }
                 end) |> Enum.reverse)
             end
@@ -238,16 +243,19 @@ defmodule Tonic do
     @spec on(term, [do: [{ :->, any, any }]]) :: ast
     defmacro on(condition, [do: clauses]) do
         quote do
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, unquote(Macro.escape(condition)) }|@tonic_data_scheme[@tonic_current_scheme]])
+            on_id = @tonic_unique_function_id
+            @tonic_unique_function_id @tonic_unique_function_id + 1
+
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, on_id, unquote(Macro.escape(condition)) }|@tonic_data_scheme[@tonic_current_scheme]])
 
             unquote({ :__block__, [], Enum.map(clauses, fn { :->, _, [[match]|args] } ->
                 quote do
-                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, :match, unquote(Macro.escape(match)) }|@tonic_data_scheme[@tonic_current_scheme]])
+                    @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, on_id, :match, unquote(Macro.escape(match)) }|@tonic_data_scheme[@tonic_current_scheme]])
                     unquote({ :__block__, [], args })
                 end
             end) })
 
-            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, :end }|@tonic_data_scheme[@tonic_current_scheme]])
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :on, on_id, :end }|@tonic_data_scheme[@tonic_current_scheme]])
         end
     end
 

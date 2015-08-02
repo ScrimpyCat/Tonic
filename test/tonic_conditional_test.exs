@@ -73,4 +73,23 @@ defmodule TonicConditionalTests do
             assert { { :float, 2.5 }, <<>> } == Tonic.load(<<2, 2.5 :: float-size(32)-native>>, __MODULE__)
         end
     end
+
+    defmodule NestedOn do
+        use ExUnit.Case
+        use Tonic
+
+        uint8 :type, fn { _, v } -> v end
+        uint8 :type2, fn { _, v } -> v end
+        on get(:type) do
+            1 ->
+                on get(:type2) do
+                    2 -> uint8 :three
+                end
+            2 -> float32
+        end
+
+        test "nested on statement" do
+            assert { { 1, 2, { :three, 3 } }, <<4>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
 end
