@@ -3,11 +3,7 @@ Tonic
 
 An Elixir DSL for conveniently loading binary data/files.
 
-
-Work In Progress
-----------------
-
-It is currently a work in progress, and as it stands isn't particularly useful at the moment.
+The intended goal for this library is to try and create a DSL that describes the structure of the data in a way that is logical (almost 1:1 to the spec of the data), easy to read, and easy to change.
 
 
 To-Do
