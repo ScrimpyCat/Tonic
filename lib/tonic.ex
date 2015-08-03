@@ -1062,8 +1062,8 @@ defmodule Tonic.Types do
             repeat nil, fn chars = [{ c }|_] ->
                 c == unquote(fixup_value(options[:terminator])) or length(chars) == unquote(fixup_value(options[:length])) #todo: should change repeat step callback to pass in the length too
             end, fn { _, values } ->
-                str = case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
-                    { unquote(fixup_value(options[:terminator])) } -> convert_to_string_without_last_byte(values)
+                str = case List.last(values) == { unquote(fixup_value(options[:terminator])) } do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
+                    true -> convert_to_string_without_last_byte(values)
                     _ -> convert_to_string(values)
                 end
 
@@ -1100,8 +1100,8 @@ defmodule Tonic.Types do
             repeat unquote(name), fn chars = [{ c }|_] ->
                 c == unquote(fixup_value(options[:terminator])) or length(chars) == unquote(fixup_value(options[:length])) #todo: should change repeat step callback to pass in the length too
             end, fn charlist = { _, values } ->
-                { name, str } = case List.last(values) do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
-                    { unquote(fixup_value(options[:terminator])) } -> convert_to_string_without_last_byte(charlist)
+                { name, str } = case List.last(values) == { unquote(fixup_value(options[:terminator])) } do #maybe repeat callbacks shouldn't pre-reverse the list and instead leave it up to the callback to reverse?
+                    true -> convert_to_string_without_last_byte(charlist)
                     _ -> convert_to_string(charlist)
                 end
 

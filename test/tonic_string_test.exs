@@ -148,4 +148,16 @@ defmodule TonicStringTests do
             assert { { { :char, ?\0 }, "hello" }, <<>> } == Tonic.load(<<0,"hello",0,0,0>>, __MODULE__)
         end
     end
+
+    defmodule GetTerminatorStringStrip do
+        use ExUnit.Case
+        use Tonic
+
+        uint8 :char
+        string terminator: get(:char), strip: ?5
+
+        test "unnamed string strip character" do
+            assert { { { :char, ?5 }, "1234" }, <<"678">> } == Tonic.load(<<"512345678">>, __MODULE__)
+        end
+    end
 end
