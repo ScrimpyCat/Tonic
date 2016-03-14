@@ -10,7 +10,11 @@ defmodule Tonic do
     @type signedness :: :signed | :unsigned
     @type length :: non_neg_integer | (list -> boolean)
 
-    defmacro __using__(_options) do
+    @doc false
+    defp optimize_flags(flag, options) when is_list(options), do: options[flag] == true
+    defp optimize_flags(_flag, options), do: options == true
+
+    defmacro __using__(options) do
         quote do
             import Tonic
             import Tonic.Types
@@ -20,6 +24,9 @@ defmodule Tonic do
             @tonic_previous_scheme []
             @tonic_data_scheme Map.put(%{}, @tonic_current_scheme, [])
             @tonic_unique_function_id 0
+            @tonic_enable_optimization [
+                reduce: unquote(optimize_flags(:reduce, options[:optimize]))
+            ]
         end
     end
 
@@ -131,8 +138,31 @@ defmodule Tonic do
         |ops])
     end
 
+    @doc false
+    defp reduce_functions(functions), do: reduce_functions(functions, { [], [], %{} })
+
+    @doc false
+    defp reduce_functions([func = { :def, ctx, [{ name, name_ctx, args }, body] }|functions], { reduced, unique, replace }) do
+        f = { :def, ctx, [{ nil, name_ctx, args }, Macro.prewalk(body, fn t -> Macro.update_meta(t, &Keyword.delete(&1, :line)) end)] }
+        reduce_functions(functions, case Enum.find(unique, fn { _, func } -> func == f end) do
+            { replacement, _ } -> { reduced, unique, Map.put(replace, name, replacement) }
+            _  -> { [func|reduced], [{ name, f }|unique], replace }
+        end)
+    end
+    defp reduce_functions([other|functions], { reduced, unique, replace }), do: reduce_functions(functions, { [other|reduced], unique, replace })
+    defp reduce_functions([], { reduced, _unique, replace }) do
+        List.foldl(reduced, [], fn
+            { :def, ctx, [func, body] }, acc ->
+                [{ :def, ctx, [func, Macro.prewalk(body, fn
+                    { name, ctx, args } when is_atom(name) -> { replace[name] || name, ctx, args }
+                    t -> t
+                end)] }|acc]
+            other, acc -> [other|acc]
+        end)
+    end
+
     defmacro __before_compile__(env) do
-        quote do
+        code = quote do
             unquote({ :__block__, [], Map.keys(Module.get_attribute(env.module, :tonic_data_scheme)) |> Enum.map(fn scheme ->
                     { :def, [context: __MODULE__, import: Kernel], [
                             { scheme, [context: __MODULE__], [{ :currently_loaded, [], __MODULE__ }, { :data, [], __MODULE__ }, { :name, [], __MODULE__ }, { :endian, [], __MODULE__ }] },
@@ -146,6 +176,13 @@ defmodule Tonic do
                 end)
             })
         end
+
+        if Module.get_attribute(env.module, :tonic_enable_optimization)[:reduce] == true do
+            { :__block__, [], functions } = code
+            code = { :__block__, [], reduce_functions(functions) }
+        end
+
+        code
     end
 
     #loading
