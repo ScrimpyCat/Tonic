@@ -303,7 +303,7 @@ defmodule Tonic do
       Executes the load operations only on the given chunk.
 
 
-      **`chunk(`<code class="inline"><a href="#t:length/0">length</a></code>`, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">chunk(<a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the block as the load operation on the chunk of length.
 
 
@@ -340,10 +340,10 @@ defmodule Tonic do
       Executes the load operations but doesn't return the loaded data.
 
 
-      **`skip(atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">skip(atom) :: <a href="#t:ast/0">ast</a></code>**  
       Skip the given type.
 
-      **`skip(`<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">skip(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
       Skip the given block.
 
 
@@ -398,10 +398,10 @@ defmodule Tonic do
       the current loaded data.
 
 
-      **`optional(atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">optional(atom) :: <a href="#t:ast/0">ast</a></code>**  
       Optionally load the given type.
 
-      **`optional(`<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">optional(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
       Optionally load the given block.
 
 
@@ -462,10 +462,10 @@ defmodule Tonic do
       Repeat the given load operations until it reaches the end.
 
 
-      **`repeat(atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the type as the load operation to be repeated.
 
-      **`repeat(`<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the block as the load operation to be repeated.
 
 
@@ -498,18 +498,18 @@ defmodule Tonic do
       Repeat the given load operations until it reaches the end or for length.
 
 
-      **`repeat(atom, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, atom) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the type as the load operation to be repeated. And wraps the output with the given
       name.
 
-      **`repeat(atom, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the block as the load operation to be repeated. And wraps the output with the given
       name.
 
-      **`repeat(`<code class="inline"><a href="#t:length/0">length</a></code>`, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(<a href="#t:length/0">length</a>, atom) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the type as the load operation to be repeated. And repeats for length.
 
-      **`repeat(`<code class="inline"><a href="#t:length/0">length</a></code>`, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(<a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the block as the load operation to be repeated. And repeats for length.
 
 
@@ -576,11 +576,11 @@ defmodule Tonic do
       Repeat the given load operations for length.
 
 
-      **`repeat(atom, `<code class="inline"><a href="#t:length/0">length</a></code>`, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, <a href="#t:length/0">length</a>, atom) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the type as the load operation to be repeated. And wraps the output with the given
       name. Repeats for length.
 
-      **`repeat(atom, `<code class="inline"><a href="#t:length/0">length</a></code>`, `<code class="inline"><a href="#t:block/1">block(any)</a></code>`) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, <a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
       Uses the block as the load operation to be repeated. And wraps the output with the given
       name. Repeats for length.
 
@@ -813,10 +813,10 @@ defmodule Tonic do
       Declare a new type as an alias of another type or of a function.
 
 
-      **`type(atom, atom) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">type(atom, atom) :: <a href="#t:ast/0">ast</a></code>**  
       Create the new type as an alias of another type.
 
-      **`type(atom, (binary, atom, ` <code class="inline"><a href="#t:endianness/0">endianness</a></code> ` -> { any, binary })) ::` <code class="inline"><a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">type(atom, (binary, atom, <a href="#t:endianness/0">endianness</a> -> { any, binary })) :: <a href="#t:ast/0">ast</a></code>**  
       Implement the type as a function. 
 
 
