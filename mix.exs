@@ -4,7 +4,7 @@ defmodule Tonic.Mixfile do
     def project do
         [
             app: :tonic,
-            version: "0.0.0",
+            version: "0.0.1",
             elixir: "~> 1.0",
             deps: deps
         ]
