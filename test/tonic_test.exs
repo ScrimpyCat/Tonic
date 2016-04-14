@@ -53,15 +53,15 @@ defmodule TonicTest do
 
         test "load all values in correct order from data", %{ data: data } do
             assert { { 
-                { :a, 1 },
-                { :b, 0 },
-                { :c, 1 },
-                { :d, 0 },
+                { :a, true },
+                { :b, false },
+                { :c, true },
+                { :d, false },
                 { :e, 0xef },
-                { :f, 0 },
-                { :g, 1 },
-                { :h, 0 },
-                { :i, 1 }
+                { :f, false },
+                { :g, true },
+                { :h, false },
+                { :i, true }
             }, <<>> } == Tonic.load(data, __MODULE__)
         end
     end

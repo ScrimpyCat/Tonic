@@ -1140,7 +1140,10 @@ end
 defmodule Tonic.Types do
     import Tonic
 
-    type :bit, :integer, 1, :unsigned
+    type :bit, fn <<value :: size(1), data :: bitstring>>, name, _ ->
+        { { name, value == 1 }, data }
+    end
+
     type :int8, :integer, 8, :signed
     type :int16, :integer, 16, :signed
     type :int32, :integer, 32, :signed
