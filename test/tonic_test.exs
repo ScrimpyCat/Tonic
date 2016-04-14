@@ -29,6 +29,43 @@ defmodule TonicTest do
         end
     end
 
+    defmodule BitTests do
+        use ExUnit.Case
+        use Tonic
+
+        bit :a
+        bit :b
+        bit :c
+        bit :d
+        uint8 :e
+        bit :f
+        bit :g
+        bit :h
+        bit :i
+
+        setup do
+            {
+                :ok, data: <<
+                    0xaef5 :: integer-size(16)-unsigned-big
+                >>
+            }
+        end
+
+        test "load all values in correct order from data", %{ data: data } do
+            assert { { 
+                { :a, 1 },
+                { :b, 0 },
+                { :c, 1 },
+                { :d, 0 },
+                { :e, 0xef },
+                { :f, 0 },
+                { :g, 1 },
+                { :h, 0 },
+                { :i, 1 }
+            }, <<>> } == Tonic.load(data, __MODULE__)
+        end
+    end
+
     defmodule LoadOptionTests do
         defmodule CustomTypes do
             use Tonic

@@ -281,15 +281,15 @@ defmodule Tonic do
     @doc """
       Loads the binary data using the spec from a given module
     """
-    @spec load(binary, module) :: { any, binary }
-    def load(data, module) when is_binary(data) do
+    @spec load(bitstring, module) :: { any, bitstring }
+    def load(data, module) when is_bitstring(data) do
         module.load([], data, nil, :native)
     end
 
     @doc """
       Loads the file data using the spec from a given module
     """
-    @spec load_file(Path.t, module) :: { any, binary }
+    @spec load_file(Path.t, module) :: { any, bitstring }
     def load_file(file, module) do
         { :ok, data } = File.read(file)
         load(data, module)
@@ -908,7 +908,7 @@ defmodule Tonic do
       **<code class="inline">type(atom, atom) :: <a href="#t:ast/0">ast</a></code>**  
       Create the new type as an alias of another type.
 
-      **<code class="inline">type(atom, (binary, atom, <a href="#t:endianness/0">endianness</a> -> { any, binary })) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">type(atom, (bitstring, atom, <a href="#t:endianness/0">endianness</a> -> { any, bitstring })) :: <a href="#t:ast/0">ast</a></code>**  
       Implement the type as a function. 
 
 
@@ -917,19 +917,19 @@ defmodule Tonic do
         type :myint8, :int8
 
         type :myint8, fn data, name, _ ->
-            <<value :: integer-size(8)-signed, data :: binary>> data
+            <<value :: integer-size(8)-signed, data :: bitstring>> data
             { { name, value }, data }
         end
 
         type :myint16, fn 
             data, name, :little ->
-                <<value :: integer-size(16)-signed-little, data :: binary>> = data
+                <<value :: integer-size(16)-signed-little, data :: bitstring>> = data
                 { { name, value }, data }
             data, name, :big ->
-                <<value :: integer-size(16)-signed-big, data :: binary>> = data
+                <<value :: integer-size(16)-signed-big, data :: bitstring>> = data
                 { { name, value }, data }
             data, name, :native ->
-                <<value :: integer-size(16)-signed-native, data :: binary>> = data
+                <<value :: integer-size(16)-signed-native, data :: bitstring>> = data
                 { { name, value }, data }
         end
     """
@@ -968,7 +968,7 @@ defmodule Tonic do
 
     #type with function
     #type :new_type, fn data, name, endian -> { nil, data } end
-    @spec type(atom, (binary, atom, endianness -> { any, binary })) :: ast
+    @spec type(atom, (bitstring, atom, endianness -> { any, bitstring })) :: ast
     defmacro type(name, fun) do
         quote do
             defmacro unquote(name)() do
@@ -1076,17 +1076,17 @@ defmodule Tonic do
             end
 
             def unquote(name)(currently_loaded, data, name, :little) do
-                <<value :: unquote(binary_parameters(type, size, signedness, :little)), data :: binary>> = data
+                <<value :: unquote(binary_parameters(type, size, signedness, :little)), data :: bitstring>> = data
                 { { name, value }, data }
             end
 
             def unquote(name)(currently_loaded, data, name, :native) do
-                <<value :: unquote(binary_parameters(type, size, signedness, :native)), data :: binary>> = data
+                <<value :: unquote(binary_parameters(type, size, signedness, :native)), data :: bitstring>> = data
                 { { name, value }, data }
             end
 
             def unquote(name)(currently_loaded, data, name, :big) do
-                <<value :: unquote(binary_parameters(type, size, signedness, :big)), data :: binary>> = data
+                <<value :: unquote(binary_parameters(type, size, signedness, :big)), data :: bitstring>> = data
                 { { name, value }, data }
             end
         end
@@ -1130,7 +1130,7 @@ defmodule Tonic do
             end
 
             def unquote(name)(currently_loaded, data, name, _) do
-                <<value :: unquote(binary_parameters(type, size, signedness, endianness)), data :: binary>> = data
+                <<value :: unquote(binary_parameters(type, size, signedness, endianness)), data :: bitstring>> = data
                 { { name, value }, data }
             end
         end
@@ -1140,6 +1140,7 @@ end
 defmodule Tonic.Types do
     import Tonic
 
+    type :bit, :integer, 1, :unsigned
     type :int8, :integer, 8, :signed
     type :int16, :integer, 16, :signed
     type :int32, :integer, 32, :signed
