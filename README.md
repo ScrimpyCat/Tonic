@@ -115,3 +115,12 @@ To-Do
  * New function: Seek. Ability to seek certain points in the data
  * Change repeat step callback to pass in current length
  * Add a repeat/5 where you can pass in the option whether the list should be reversed or not
+
+
+Installation
+------------
+```elixir
+defp deps do
+    [{ :tonic, "~> 0.0.1" }]
+end
+```
