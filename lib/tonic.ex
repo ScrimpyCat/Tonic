@@ -25,6 +25,7 @@ defmodule Tonic do
       optimizations include:
         :reduce #Enables the code reduction optimization, so the generated code is reduced as much as possible.
 
+
       Example
       -------
         defmodule PNG do
@@ -1143,21 +1144,64 @@ end
 defmodule Tonic.Types do
     import Tonic
 
+    @doc """
+      Read a single bit boolean value. 
+    """
     type :bit, fn <<value :: size(1), data :: bitstring>>, name, _ ->
         { { name, value == 1 }, data }
     end
 
+
+    @doc """
+      Read an 8-bit signed integer.
+    """
     type :int8, :integer, 8, :signed
+
+    @doc """
+      Read a 16-bit signed integer.
+    """
     type :int16, :integer, 16, :signed
+
+    @doc """
+      Read a 32-bit signed integer.
+    """
     type :int32, :integer, 32, :signed
+
+    @doc """
+      Read a 64-bit signed integer.
+    """
     type :int64, :integer, 64, :signed
 
+
+    @doc """
+      Read an 8-bit unsigned integer.
+    """
     type :uint8, :integer, 8, :unsigned
+
+    @doc """
+      Read a 16-bit unsigned integer.
+    """
     type :uint16, :integer, 16, :unsigned
+
+    @doc """
+      Read a 32-bit unsigned integer.
+    """
     type :uint32, :integer, 32, :unsigned
+
+    @doc """
+      Read a 64-bit unsigned integer.
+    """
     type :uint64, :integer, 64, :unsigned
 
+
+    @doc """
+      Read a 32-bit floating point.
+    """
     type :float32, :float, 32, :signed
+
+    @doc """
+      Read a 64-bit floating point.
+    """
     type :float64, :float, 64, :signed
 
 
@@ -1172,6 +1216,20 @@ defmodule Tonic.Types do
     def convert_to_string({ name, values }), do: { name, convert_to_string(values) }
     def convert_to_string(values), do: List.foldl(values, "", fn { c }, s -> s <> <<c>> end)
 
+    @doc """
+      Read a string.
+
+      Default will read until end of data. Otherwise a length value can be specified `length: 10`,
+      or it can read up to a terminator `?\\n` or `terminator: ?\\n`, or both limits can be applied.
+
+      Examples
+      --------
+        string :read_to_end
+        string :read_8_chars, length: 8
+        string :read_till_nul, 0
+        string :read_till_newline, ?\\n
+        string :read_till_newline_or_8_chars, length: 8, terminator: ?\\n
+    """
     defmacro string(name \\ [], options \\ [])
     defmacro string(terminator, []) when is_integer(terminator), do: quote do: string(terminator: unquote(terminator))
 
