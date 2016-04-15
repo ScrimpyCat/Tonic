@@ -14,7 +14,7 @@ The default behaviour of these operations is to remove the data that was read fr
 current binary data, and append the value to the current block. Values by default are
 in the form of a tagged value if a name is supplied `{ :name, value }`, otherwise are
 simply `value` if no name is supplied. The default return value behaviour can be
-overriden by passing in a function.
+overridden by passing in a function.
 
 The most common types are defined in `Tonic.Types` for convenience. These are 
 common integer and floating point types, and strings. The behaviour of types can
