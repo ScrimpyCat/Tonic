@@ -9,6 +9,12 @@ defmodule Tonic do
       repeated data, branches, optional segments. Where the majority of these functions
       can be further extended to customize the behaviour and result.
 
+      The default behaviour of these operations is to remove the data that was read from the
+      current binary data, and append the value to the current block. Values by default are
+      in the form of a tagged value if a name is supplied `{ :name, value }`, otherwise are
+      simply `value` if no name is supplied. The default return value behaviour can be
+      overriden by passing in a function.
+
       The most common types are defined in `Tonic.Types` for convenience. These are 
       common integer and floating point types, and strings. The behaviour of types can
       further be customized when used otherwise new types can be defined using the `type/2`
@@ -283,7 +289,9 @@ defmodule Tonic do
 
     #loading
     @doc """
-      Loads the binary data using the spec from a given module
+      Loads the binary data using the spec from a given module.
+
+      The return value consists of the loaded values and the remaining data that wasn't read.
     """
     @spec load(bitstring, module) :: { any, bitstring }
     def load(data, module) when is_bitstring(data) do
@@ -291,7 +299,9 @@ defmodule Tonic do
     end
 
     @doc """
-      Loads the file data using the spec from a given module
+      Loads the file data using the spec from a given module.
+
+      The return value consists of the loaded values and the remaining data that wasn't read.
     """
     @spec load_file(Path.t, module) :: { any, bitstring }
     def load_file(file, module) do
