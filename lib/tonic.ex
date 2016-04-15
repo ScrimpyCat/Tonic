@@ -256,15 +256,18 @@ defmodule Tonic do
     defmacro __before_compile__(env) do
         code = quote do
             unquote({ :__block__, [], Map.keys(Module.get_attribute(env.module, :tonic_data_scheme)) |> Enum.map(fn scheme ->
-                    { :def, [context: __MODULE__, import: Kernel], [
-                            { scheme, [context: __MODULE__], [{ :currently_loaded, [], __MODULE__ }, { :data, [], __MODULE__ }, { :name, [], __MODULE__ }, { :endian, [], __MODULE__ }] },
-                            [do: { :__block__, [], expand_data_scheme(Module.get_attribute(env.module, :tonic_data_scheme)[scheme], case to_string(scheme) do
-                                <<"load_group_", _ :: binary>> -> quote do: { name }
-                                <<"load_skip_", _ :: binary>> -> quote do: { name }
-                                _ -> quote do: {} #load, load_repeat_
-                            end) }]
-                        ]
-                    }
+                    { :__block__, [], [
+                        quote(do: @doc false),
+                        { :def, [context: __MODULE__, import: Kernel], [
+                                { scheme, [context: __MODULE__], [{ :currently_loaded, [], __MODULE__ }, { :data, [], __MODULE__ }, { :name, [], __MODULE__ }, { :endian, [], __MODULE__ }] },
+                                [do: { :__block__, [], expand_data_scheme(Module.get_attribute(env.module, :tonic_data_scheme)[scheme], case to_string(scheme) do
+                                    <<"load_group_", _ :: binary>> -> quote do: { name }
+                                    <<"load_skip_", _ :: binary>> -> quote do: { name }
+                                    _ -> quote do: {} #load, load_repeat_
+                                end) }]
+                            ]
+                        }
+                    ] }
                 end)
             })
         end
