@@ -33,7 +33,7 @@ defmodule TonicOptimizeTests do
         group :b do
             uint8
         end
-        
+
         test "functions correctly" do
             assert { { { :a, 1 }, { :b, 2 } }, <<>> } == Tonic.load(<<1,2>>, __MODULE__)
         end
@@ -59,7 +59,7 @@ defmodule TonicOptimizeTests do
         group :b do
             uint8
         end
-        
+
         test "functions correctly" do
             assert { { { :a, 1 }, { :b, 2 } }, <<>> } == Tonic.load(<<1,2>>, __MODULE__)
         end
