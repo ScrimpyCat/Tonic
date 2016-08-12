@@ -199,7 +199,6 @@ defmodule Tonic do
             data = binary_part(data, 0, size)
         end|[quote do
             unquote_splicing(expand_operation(chunk, []))
-            { loaded, scope, data }
         end|[quote([do: data = unquote({ String.to_atom("next_data" <> to_string(id)), [], __MODULE__ })])|ops]]])
     end
     defp expand_operation([{ :on, _, :match, match }|scheme], ops) do
