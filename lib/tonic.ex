@@ -202,7 +202,10 @@ defmodule Tonic do
             { loaded, scope, data }
         end|[quote([do: data = unquote({ String.to_atom("next_data" <> to_string(id)), [], __MODULE__ })])|ops]]])
     end
-    defp expand_operation([{ :on, _, :match, match }|scheme], ops), do: expand_operation(scheme, [[match], { :__block__, [], ops }])
+    defp expand_operation([{ :on, _, :match, match }|scheme], ops) do
+        [clause, { :__block__, [], body }] = expand_operation(scheme, [[match], { :__block__, [], ops }])
+        [clause, { :__block__, [], body ++ [quote(do: { loaded, scope, data })] }]
+    end
     defp expand_operation([{ :on, id, :end }|scheme], ops) do
         { fun, _ } = Code.eval_quoted(quote([do: fn
             { :on, unquote(id), _ } -> false
@@ -217,7 +220,7 @@ defmodule Tonic do
         end]))
 
         expand_operation(scheme, [quote do
-            case unquote(fixup_value(condition)) do
+            { loaded, scope, data } =  case unquote(fixup_value(condition)) do
                 unquote(Enum.chunk_by(matches, fun) |> Enum.chunk(2) |> Enum.map(fn [branch, match|_] ->
                     { :->, [], expand_operation(branch ++ match, []) }
                 end) |> Enum.reverse)
