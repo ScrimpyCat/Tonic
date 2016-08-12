@@ -204,7 +204,7 @@ defmodule Tonic do
     end
     defp expand_operation([{ :on, _, :match, match }|scheme], ops) do
         [clause, { :__block__, [], body }] = expand_operation(scheme, [[match], { :__block__, [], ops }])
-        [clause, { :__block__, [], body ++ [quote(do: { loaded, scope, data })] }]
+        [clause, { :__block__, [], body ++ [quote(do: { loaded, scope, data, endian })] }]
     end
     defp expand_operation([{ :on, id, :end }|scheme], ops) do
         { fun, _ } = Code.eval_quoted(quote([do: fn
@@ -220,7 +220,7 @@ defmodule Tonic do
         end]))
 
         expand_operation(scheme, [quote do
-            { loaded, scope, data } =  case unquote(fixup_value(condition)) do
+            { loaded, scope, data, endian } =  case unquote(fixup_value(condition)) do
                 unquote(Enum.chunk_by(matches, fun) |> Enum.chunk(2) |> Enum.map(fn [branch, match|_] ->
                     { :->, [], expand_operation(branch ++ match, []) }
                 end) |> Enum.reverse)
