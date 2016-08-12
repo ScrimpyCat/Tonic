@@ -278,9 +278,7 @@ defmodule Tonic do
             end))
         end
 
-        if Module.get_attribute(env.module, :tonic_enable_optimization)[:reduce] == true do
-            code = reduce_functions(code)
-        end
+        code = if(Module.get_attribute(env.module, :tonic_enable_optimization)[:reduce] == true, do: reduce_functions(code), else: code)
 
         { :__block__, [], Enum.map(code, fn function -> { :__block__, [], [quote(do: @doc false), function] } end) }
     end
