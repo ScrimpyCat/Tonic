@@ -3,7 +3,7 @@ Tonic
 
 An Elixir DSL for conveniently loading binary data/files.
 
-The DSL is designed to closely represent the structure of the actual binary data 
+The DSL is designed to closely represent the structure of the actual binary data
 layout. So it aims to be easy to read, and easy to change.
 
 The DSL defines functionality to represent types, endianness, groups, chunks,
@@ -16,7 +16,7 @@ in the form of a tagged value if a name is supplied `{ :name, value }`, otherwis
 simply `value` if no name is supplied. The default return value behaviour can be
 overridden by passing in a function.
 
-The most common types are defined in `Tonic.Types` for convenience. These are 
+The most common types are defined in `Tonic.Types` for convenience. These are
 common integer and floating point types, and strings. The behaviour of types can
 further be customized when used otherwise new types can be defined using the `type/2`
 function.
@@ -121,6 +121,6 @@ Installation
 ------------
 ```elixir
 defp deps do
-    [{ :tonic, "~> 0.0.1" }]
+    [{ :tonic, "~> 0.0.2" }]
 end
 ```
