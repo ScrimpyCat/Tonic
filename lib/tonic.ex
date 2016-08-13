@@ -240,6 +240,35 @@ defmodule Tonic do
     end
 
     @doc false
+    defp find_used_variables(ast = { name, [], __MODULE__ }, unused) do
+        { unused, _ } = Enum.map_reduce(unused, nil, fn
+            vars, :found -> { vars, :found }
+            vars, _ ->
+                { value, new } = Keyword.get_and_update(vars, name, &({ &1, true }))
+                if(value != nil, do: { new, :found }, else: { vars, nil })
+        end)
+        { ast, unused }
+    end
+    defp find_used_variables(ast, unused), do: { ast, unused }
+
+    @doc false
+    defp find_unused_variables({ :=, _, [variable|init] }, unused) do
+        { _, names } = Macro.prewalk(variable, [], fn
+            ast = { name, [], __MODULE__ }, acc -> { ast, [{ name, false }|acc] }
+            ast, acc -> { ast, acc }
+        end)
+
+        { _, unused } = Macro.prewalk(init, unused, &find_used_variables/2)
+
+        [names|unused]
+    end
+    defp find_unused_variables({ :__block__, _, ops }, unused), do: Enum.reduce(ops, unused, &find_unused_variables/2)
+    defp find_unused_variables(op, unused) do
+        { _, unused } = Macro.prewalk(op, unused, &find_used_variables/2)
+        unused
+    end
+
+    @doc false
     defp reduce_functions(functions), do: reduce_functions(functions, { [], [], %{} })
 
     @doc false
