@@ -271,8 +271,15 @@ defmodule Tonic do
     @doc false
     defp mark_unused_variables(functions) do
         Enum.map(functions, fn { :def, ctx, [{ name, name_ctx, args }, [do: body]] } ->
-            [arg_unused|unused] = Enum.reverse(find_unused_variables(body, [Enum.map(args, fn { arg, _, _ } -> { arg, false } end)]))
+            unused = Enum.reverse(find_unused_variables(body, []))
             { body, _ } = mark_unused_variables(body, unused)
+
+            #Run it a second time to prevent cases where: var1 is initialized, var1 is assigned to var2, var2 is not used and so removed making var1 also now unused (so needs to be removed)
+            [arg_unused|unused] = Enum.reverse(find_unused_variables(body, [Enum.map(args, fn { arg, _, _ } -> { arg, false } end)]))
+            { body, _ } = mark_unused_variables(body, Enum.map(unused, fn
+                variables -> Enum.filter(variables, fn { name, _ } -> !(to_string(name) |> String.starts_with?("_")) end)
+            end))
+
             { :def, ctx, [{ name, name_ctx, underscore_variables(args, arg_unused) }, [do: body]] }
         end)
     end
