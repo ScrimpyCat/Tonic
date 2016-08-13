@@ -283,10 +283,14 @@ defmodule Tonic do
             { _, used }, false -> used
             _, _ -> true
         end)
-        { if(used, do: { :=, ctx, [underscore_variables(variable, assignment)|init] }, else: nil), unused }
+        { if(used, do: { :=, ctx, [underscore_variables(variable, assignment)|init] }, else: { :__block__, [], [] }), unused }
     end
     defp mark_unused_variables({ :__block__, ctx, ops }, unused) do
         { ops, unused } = Enum.map_reduce(ops, unused, &mark_unused_variables/2)
+        ops = Enum.filter(ops, fn
+            { :__block__, [], [] } -> false
+            _ -> true
+        end)
         { { :__block__, ctx, ops }, unused }
     end
     defp mark_unused_variables(op, unused), do: { op, unused }
