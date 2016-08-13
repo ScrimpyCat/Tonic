@@ -269,6 +269,31 @@ defmodule Tonic do
     end
 
     @doc false
+    defp mark_unused_variables(functions) do
+        Enum.map(functions, fn { :def, ctx, [{ name, name_ctx, args }, [do: body]] } ->
+            [arg_unused|unused] = Enum.reverse(find_unused_variables(body, [Enum.map(args, fn { arg, _, _ } -> { arg, false } end)]))
+            { body, _ } = mark_unused_variables(body, unused)
+            { :def, ctx, [{ name, name_ctx, underscore_variables(args, arg_unused) }, [do: body]] }
+        end)
+    end
+
+    @doc false
+    defp mark_unused_variables({ :=, ctx, [variable|init] }, [assignment|unused]), do: { { :=, ctx, [underscore_variables(variable, assignment)|init] }, unused }
+    defp mark_unused_variables({ :__block__, ctx, ops }, unused) do
+        { ops, unused } = Enum.map_reduce(ops, unused, &mark_unused_variables/2)
+        { { :__block__, ctx, ops }, unused }
+    end
+    defp mark_unused_variables(op, unused), do: { op, unused }
+
+    @doc false
+    defp underscore_variables(variables, assignment) do
+        Macro.prewalk(variables, fn
+            { name, [], __MODULE__ } -> { if(Keyword.get(assignment, name, true), do: name, else: String.to_atom("_" <> to_string(name))), [], __MODULE__ }
+            ast -> ast
+        end)
+    end
+
+    @doc false
     defp reduce_functions(functions), do: reduce_functions(functions, { [], [], %{} })
 
     @doc false
@@ -276,7 +301,7 @@ defmodule Tonic do
         f = { :def, ctx, [{ nil, name_ctx, args }, Macro.prewalk(body, fn t -> Macro.update_meta(t, &Keyword.delete(&1, :line)) end)] }
         reduce_functions(functions, case Enum.find(unique, fn { _, func } -> func == f end) do
             { replacement, _ } -> { reduced, unique, Map.put(replace, name, replacement) }
-            _  -> { [func|reduced], [{ name, f }|unique], replace }
+            _ -> { [func|reduced], [{ name, f }|unique], replace }
         end)
     end
     defp reduce_functions([other|functions], { reduced, unique, replace }), do: reduce_functions(functions, { [other|reduced], unique, replace })
@@ -307,6 +332,7 @@ defmodule Tonic do
         end
 
         code = if(Module.get_attribute(env.module, :tonic_enable_optimization)[:reduce] == true, do: reduce_functions(code), else: code)
+        code = mark_unused_variables(code)
 
         { :__block__, [], Enum.map(code, fn function -> { :__block__, [], [quote(do: @doc false), function] } end) }
     end
