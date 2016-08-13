@@ -1,11 +1,11 @@
-defmodule TonicRepeatTests do
+defmodule TonicChunkTests do
     defmodule UnusedChunk do
         use ExUnit.Case
         use Tonic
 
         chunk 4 do
         end
-        
+
         test "unused chunk" do
             assert { {}, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
@@ -19,7 +19,7 @@ defmodule TonicRepeatTests do
             uint8
             uint8
         end
-        
+
         test "partially used chunk" do
             assert { { 1, 2 }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
@@ -32,7 +32,7 @@ defmodule TonicRepeatTests do
         chunk 4 do
             repeat :uint8
         end
-        
+
         test "fully used chunk" do
             assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
@@ -48,7 +48,7 @@ defmodule TonicRepeatTests do
                 uint8
             end
         end
-        
+
         test "nested chunk" do
             assert { { 1, 2 }, <<3,4>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
@@ -65,7 +65,7 @@ defmodule TonicRepeatTests do
         chunk 1 do
             uint8 :b
         end
-        
+
         test "multiple chunks" do
             assert { { { :a, 1 }, { :b, 3 } }, <<4>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
@@ -79,7 +79,7 @@ defmodule TonicRepeatTests do
         chunk get(:length) do
             uint8
         end
-        
+
         test "get length chunk" do
             assert { { { :length, 1 }, 2 }, <<3,4>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
