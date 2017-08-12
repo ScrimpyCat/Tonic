@@ -231,6 +231,11 @@ defmodule Tonic do
             quote([do: { _, data } = unquote(create_call(op))])
         |ops])
     end
+    defp expand_operation([{ :assert_empty }|scheme], ops) do
+        expand_operation(scheme, [
+            quote([do: if(data != <<>>, do: raise(Tonic.NotEmpty, data: data))])
+        |ops])
+    end
     defp expand_operation([op|scheme], ops) do
         expand_operation(scheme, [
             quote([do: { value, data } = unquote(create_call(op))]),
@@ -604,6 +609,22 @@ defmodule Tonic do
             unquote(block)
 
             @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :optional, :end }|@tonic_data_scheme[@tonic_current_scheme]])
+        end
+    end
+
+    #empty!
+    @doc """
+      Assert that all the data has been loaded from the current data. If there is still data,
+      the `Tonic.NotEmpty` exception will be raised.
+
+      Example
+      -------
+        int8 :a
+        empty!() #check that there is no data left
+    """
+    defmacro empty!() do
+        quote do
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :assert_empty }|@tonic_data_scheme[@tonic_current_scheme]])
         end
     end
 
@@ -1405,4 +1426,10 @@ defmodule Tonic.MarkNotFound do
     defexception [:message, :name]
 
     def exception(option), do: %Tonic.MarkNotFound{ message: "no loaded value marked with name: #{option[:name]}", name: option[:name] }
+end
+
+defmodule Tonic.NotEmpty do
+    defexception [:message, :data]
+
+    def exception(option), do: %Tonic.NotEmpty{ message: "data is not empty: #{inspect(option[:data])}", data: option[:data] }
 end

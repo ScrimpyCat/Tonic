@@ -25,6 +25,21 @@ defmodule TonicChunkTests do
         end
     end
 
+    defmodule PartiallyUsedChunkNotEmpty do
+        use ExUnit.Case
+        use Tonic
+
+        chunk 4 do
+            uint8()
+            uint8()
+            empty!()
+        end
+
+        test "partially used chunk is not empty" do
+            assert_raise Tonic.NotEmpty, fn -> Tonic.load(<<1,2,3,4>>, __MODULE__) end
+        end
+    end
+
     defmodule FullyUsedChunk do
         use ExUnit.Case
         use Tonic
@@ -34,6 +49,20 @@ defmodule TonicChunkTests do
         end
 
         test "fully used chunk" do
+            assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
+        end
+    end
+
+    defmodule FullyUsedChunkEmpty do
+        use ExUnit.Case
+        use Tonic
+
+        chunk 4 do
+            repeat :uint8
+            empty!()
+        end
+
+        test "fully used chunk is empty" do
             assert { { [1, 2, 3, 4] }, <<>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
     end

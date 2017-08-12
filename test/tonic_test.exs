@@ -66,6 +66,32 @@ defmodule TonicTest do
         end
     end
 
+    defmodule EmptyTests do
+        use ExUnit.Case
+        use Tonic
+
+        int8 :a
+        int8 :b
+        empty!()
+
+        setup do
+            {
+                :ok, data: <<1, 2>>
+            }
+        end
+
+        test "data is empty", %{ data: data } do
+            assert { {
+                { :a, 1 },
+                { :b, 2 }
+            }, <<>> } == Tonic.load(data, __MODULE__)
+        end
+
+        test "data is not empty", %{ data: data } do
+            assert_raise Tonic.NotEmpty, fn -> Tonic.load(<<data :: binary, 3>>, __MODULE__) end
+        end
+    end
+
     defmodule LoadOptionTests do
         defmodule CustomTypes do
             use Tonic
