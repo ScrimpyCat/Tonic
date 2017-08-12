@@ -20,7 +20,7 @@ defmodule TonicTest do
         end
 
         test "load all values in correct order from data", %{ data: data } do
-            assert { { 
+            assert { {
                 { :a, 1 },
                 { :b, 2 },
                 { :c, 3.5 },
@@ -52,7 +52,7 @@ defmodule TonicTest do
         end
 
         test "load all values in correct order from data", %{ data: data } do
-            assert { { 
+            assert { {
                 { :a, true },
                 { :b, false },
                 { :c, true },
@@ -128,7 +128,7 @@ defmodule TonicTest do
             end
 
             test "endian overriding of types", %{ data: data } do
-                assert { { 
+                assert { {
                     { :a, 1 },
                     { :b, :big },
                     { :c, 3 },
@@ -148,13 +148,13 @@ defmodule TonicTest do
             import CustomTypes
 
             endian :little
-            int32
-            custom_func_type_endian
-            custom_func_type_lint32
-            custom_wrap_int32
-            custom_wrap_lint32
-            custom_int32
-            custom_lint32
+            int32()
+            custom_func_type_endian()
+            custom_func_type_lint32()
+            custom_wrap_int32()
+            custom_wrap_lint32()
+            custom_int32()
+            custom_lint32()
 
             setup do
                 {
@@ -171,7 +171,7 @@ defmodule TonicTest do
             end
 
             test "unnamed types", %{ data: data } do
-                assert { { 
+                assert { {
                     1,
                     :little,
                     3,
@@ -224,7 +224,7 @@ defmodule TonicTest do
             end
 
             test "custom functions for types", %{ data: data } do
-                assert { { 
+                assert { {
                     1,
                     :little,
                     3,
@@ -282,7 +282,7 @@ defmodule TonicTest do
             end
 
             test "custom functions for types and overriding endianness", %{ data: data } do
-                assert { { 
+                assert { {
                     1,
                     :big,
                     3,

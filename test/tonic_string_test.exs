@@ -60,7 +60,7 @@ defmodule TonicStringTests do
         use ExUnit.Case
         use Tonic
 
-        string
+        string()
 
         test "unnamed string with no options" do
             assert { { "12345678" }, <<>> } == Tonic.load(<<"12345678">>, __MODULE__)

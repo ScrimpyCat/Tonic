@@ -5,7 +5,7 @@ defmodule TonicGroupTests do
 
         group :group_a do
         end
-        
+
         test "empty group" do
             assert { { { :group_a } }, <<>> } == Tonic.load(<<>>, __MODULE__)
         end
@@ -36,7 +36,7 @@ defmodule TonicGroupTests do
 
         group :group_b do
         end
-        
+
         test "nested empty groups" do
             assert { {
                 {
@@ -111,7 +111,7 @@ defmodule TonicGroupTests do
                 >>
             }
         end
-        
+
         test "grouped data", %{ data: data } do
             assert { {
                 { :a, 1 },
@@ -170,7 +170,7 @@ defmodule TonicGroupTests do
                 >>
             }
         end
-        
+
         test "group scope", %{ data: data } do
             assert { {
                 { :a, 1 },

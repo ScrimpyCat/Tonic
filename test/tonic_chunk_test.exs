@@ -16,8 +16,8 @@ defmodule TonicChunkTests do
         use Tonic
 
         chunk 4 do
-            uint8
-            uint8
+            uint8()
+            uint8()
         end
 
         test "partially used chunk" do
@@ -43,9 +43,9 @@ defmodule TonicChunkTests do
         use Tonic
 
         chunk 2 do
-            uint8
+            uint8()
             chunk 1 do
-                uint8
+                uint8()
             end
         end
 
@@ -77,7 +77,7 @@ defmodule TonicChunkTests do
 
         uint8 :length
         chunk get(:length) do
-            uint8
+            uint8()
         end
 
         test "get length chunk" do

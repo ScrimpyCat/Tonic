@@ -27,11 +27,11 @@ defmodule TonicOptimizeTests do
         use Tonic, optimize: [reduce: true]
 
         group :a do
-            uint8
+            uint8()
         end
 
         group :b do
-            uint8
+            uint8()
         end
 
         test "functions correctly" do
@@ -53,11 +53,11 @@ defmodule TonicOptimizeTests do
         use Tonic, optimize: [reduce: false]
 
         group :a do
-            uint8
+            uint8()
         end
 
         group :b do
-            uint8
+            uint8()
         end
 
         test "functions correctly" do

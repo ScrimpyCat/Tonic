@@ -32,7 +32,7 @@ defmodule TonicEndiannessTest do
         end
 
         test "load all values from data with correct endianness", %{ data: data } do
-            assert { { 
+            assert { {
                 { :a, 1 },
                 { :b, 1 },
                 { :c, 1 },

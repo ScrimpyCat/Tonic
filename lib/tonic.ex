@@ -1306,19 +1306,19 @@ defmodule Tonic.Types do
 
     defmacro string([terminator: terminator], []) do
         quote do
-            repeat nil, fn [{ c }|_] -> c == unquote(fixup_value(terminator)) end, fn { _, values } -> convert_to_string_without_last_byte(values) end, do: uint8
+            repeat nil, fn [{ c }|_] -> c == unquote(fixup_value(terminator)) end, fn { _, values } -> convert_to_string_without_last_byte(values) end, do: uint8()
         end
     end
 
     defmacro string([length: length], []) do
         quote do
-            repeat nil, unquote(length), fn { _, values } -> convert_to_string(values) end, do: uint8
+            repeat nil, unquote(length), fn { _, values } -> convert_to_string(values) end, do: uint8()
         end
     end
 
     defmacro string([], []) do
         quote do
-            repeat nil, fn _ -> false end, fn { _, values } -> convert_to_string(values) end, do: uint8
+            repeat nil, fn _ -> false end, fn { _, values } -> convert_to_string(values) end, do: uint8()
         end
     end
 
@@ -1337,26 +1337,26 @@ defmodule Tonic.Types do
                 else
                     quote do: str
                 end)
-            end, do: uint8
+            end, do: uint8()
         end
     end
 
     defmacro string(name, terminator) when is_integer(terminator), do: quote do: string(unquote(name), terminator: unquote(terminator))
     defmacro string(name, [terminator: terminator]) do
         quote do
-            repeat unquote(name), fn [{ c }|_] -> c == unquote(fixup_value(terminator)) end, &convert_to_string_without_last_byte/1, do: uint8
+            repeat unquote(name), fn [{ c }|_] -> c == unquote(fixup_value(terminator)) end, &convert_to_string_without_last_byte/1, do: uint8()
         end
     end
 
     defmacro string(name, [length: length]) do
         quote do
-            repeat unquote(name), unquote(length), &convert_to_string/1, do: uint8
+            repeat unquote(name), unquote(length), &convert_to_string/1, do: uint8()
         end
     end
 
     defmacro string(name, []) do
         quote do
-            repeat unquote(name), fn _ -> false end, &convert_to_string/1, do: uint8
+            repeat unquote(name), fn _ -> false end, &convert_to_string/1, do: uint8()
         end
     end
 
@@ -1375,7 +1375,7 @@ defmodule Tonic.Types do
                 else
                     quote do: str
                 end) }
-            end, do: uint8
+            end, do: uint8()
         end
     end
 end

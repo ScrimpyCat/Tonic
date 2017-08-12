@@ -3,12 +3,12 @@ defmodule TonicOptionalTests do
         use ExUnit.Case
         use Tonic
 
-        uint8
+        uint8()
         optional do
-            uint8
-            float32
+            uint8()
+            float32()
         end
-        uint8
+        uint8()
 
         test "optional statement that succeeds" do
             assert { { 1, 2, 2.5, 3 }, <<>> } == Tonic.load(<<1, 2, 2.5 :: float-size(32)-native, 3>>, __MODULE__)
@@ -19,12 +19,12 @@ defmodule TonicOptionalTests do
         use ExUnit.Case
         use Tonic
 
-        uint8
+        uint8()
         optional do
-            uint8
-            float32
+            uint8()
+            float32()
         end
-        uint8
+        uint8()
 
         test "optional statement that fails" do
             assert { { 1, 2 }, <<3>> } == Tonic.load(<<1, 2, 3>>, __MODULE__)
@@ -35,9 +35,9 @@ defmodule TonicOptionalTests do
         use ExUnit.Case
         use Tonic
 
-        uint8
+        uint8()
         optional :float32
-        uint8
+        uint8()
 
         test "optional unnamed statement that succeeds" do
             assert { { 1, 2.5, 3 }, <<>> } == Tonic.load(<<1, 2.5 :: float-size(32)-native, 3>>, __MODULE__)
@@ -48,9 +48,9 @@ defmodule TonicOptionalTests do
         use ExUnit.Case
         use Tonic
 
-        uint8
+        uint8()
         optional :float32
-        uint8
+        uint8()
 
         test "optional unnamed statement that succeeds" do
             assert { { 1, 3 }, <<>> } == Tonic.load(<<1, 3>>, __MODULE__)
@@ -64,10 +64,10 @@ defmodule TonicOptionalTests do
         uint8 :type, fn { _, value } -> value end
         optional do
             on get(:type) do
-                1 -> uint8
+                1 -> uint8()
             end
         end
-        uint8
+        uint8()
 
         test "optional conditional that succeeds" do
             assert { { 1, 2, 3 }, <<>> } == Tonic.load(<<1, 2, 3>>, __MODULE__)
@@ -81,10 +81,10 @@ defmodule TonicOptionalTests do
         uint8 :type, fn { _, value } -> value end
         optional do
             on get(:type) do
-                :missing -> uint8
+                :missing -> uint8()
             end
         end
-        uint8
+        uint8()
 
         test "optional conditional that fails to match" do
             assert { { 1, 2 }, <<3>> } == Tonic.load(<<1, 2, 3>>, __MODULE__)

@@ -5,7 +5,7 @@ defmodule TonicRepeatTests do
 
         repeat :values, 4 do
         end
-        
+
         test "empty repeat" do
             assert { { { :values, [{}, {}, {}, {}] } }, <<1,2,3,4>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
@@ -17,7 +17,7 @@ defmodule TonicRepeatTests do
 
         repeat :values, 0 do
         end
-        
+
         test "repeat zero times" do
             assert { { { :values, [] } }, <<1,2,3,4>> } == Tonic.load(<<1,2,3,4>>, __MODULE__)
         end
@@ -41,7 +41,7 @@ defmodule TonicRepeatTests do
         use Tonic
 
         repeat :values, 4 do
-            uint8
+            uint8()
         end
 
         test "block based repeat to capture four unnamed values" do
@@ -102,7 +102,7 @@ defmodule TonicRepeatTests do
         repeat :values, 4, fn { _, value } ->
             Enum.map value, fn { i } -> i end
         end do
-            uint8
+            uint8()
         end
 
         test "block based repeat with a function to strip out repeat and index names" do
