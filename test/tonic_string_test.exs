@@ -56,6 +56,44 @@ defmodule TonicStringTests do
         end
     end
 
+    defmodule StringStripBinaryVariant do
+        use ExUnit.Case
+        use Tonic
+
+        string :name, length: 5, strip: "\n"
+        string :name, terminator: ?0, strip: "\n\n"
+
+        test "string strip character" do
+            assert { { { :name, "1234" }, { :name, "56789" } }, <<>> } == Tonic.load(<<"1234\n56789\n\n\n\n0">>, __MODULE__)
+        end
+    end
+
+    defmodule StringStripRuntimeVariant do
+        use ExUnit.Case
+        use Tonic
+
+        uint8 :strip
+        string :name, length: 5, strip: get(:strip)
+        string :name, terminator: ?0, strip: get(:strip)
+
+        test "string strip character" do
+            assert { { { :strip, ?\n }, { :name, "1234" }, { :name, "56789" } }, <<>> } == Tonic.load(<<"\n1234\n56789\n\n\n\n0">>, __MODULE__)
+        end
+    end
+
+    defmodule StringStripRuntimeBinaryVariant do
+        use ExUnit.Case
+        use Tonic
+
+        string :strip, length: 1
+        string :name, length: 5, strip: get(:strip)
+        string :name, terminator: ?0, strip: get(:strip)
+
+        test "string strip character" do
+            assert { { { :strip, "\n" }, { :name, "1234" }, { :name, "56789" } }, <<>> } == Tonic.load(<<"\n1234\n56789\n\n\n\n0">>, __MODULE__)
+        end
+    end
+
     defmodule UnnamedStringTillEnd do
         use ExUnit.Case
         use Tonic

@@ -1293,6 +1293,8 @@ defmodule Tonic.Types do
       Default will read until end of data. Otherwise a length value can be specified `length: 10`,
       or it can read up to a terminator `?\\n` or `terminator: ?\\n`, or both limits can be applied.
 
+      The string can have its trailing characters stripped by using `strip: ?\\n` or `strip: "\\n"`.
+
       Examples
       --------
         string :read_to_end
@@ -1300,6 +1302,7 @@ defmodule Tonic.Types do
         string :read_till_nul, 0
         string :read_till_newline, ?\\n
         string :read_till_newline_or_8_chars, length: 8, terminator: ?\\n
+        string :read_to_end_remove_newline, strip: ?\\n
     """
     defmacro string(name \\ [], options \\ [])
     defmacro string(terminator, []) when is_integer(terminator), do: quote do: string(terminator: unquote(terminator))
@@ -1333,7 +1336,16 @@ defmodule Tonic.Types do
                 end
 
                 unquote(if options[:strip] != nil do
-                    quote do: String.rstrip(str, unquote(fixup_value(options[:strip])))
+                    case fixup_value(options[:strip]) do
+                        literal when is_integer(literal) or is_binary(literal) -> quote do: String.trim_trailing(str, <<unquote(fixup_value(options[:strip])) :: utf8>>)
+                        runtime ->
+                            quote do
+                                case unquote(runtime) do
+                                    chr when is_integer(chr) -> String.trim_trailing(str, <<chr :: utf8>>)
+                                    bin -> String.trim_trailing(str, bin)
+                                end
+                            end
+                    end
                 else
                     quote do: str
                 end)
@@ -1371,7 +1383,16 @@ defmodule Tonic.Types do
                 end
 
                 { name, unquote(if options[:strip] != nil do
-                    quote do: String.rstrip(str, unquote(fixup_value(options[:strip])))
+                    case fixup_value(options[:strip]) do
+                        literal when is_integer(literal) or is_binary(literal) -> quote do: String.trim_trailing(str, <<unquote(fixup_value(options[:strip])) :: utf8>>)
+                        runtime ->
+                            quote do
+                                case unquote(runtime) do
+                                    chr when is_integer(chr) -> String.trim_trailing(str, <<chr :: utf8>>)
+                                    bin -> String.trim_trailing(str, bin)
+                                end
+                            end
+                    end
                 else
                     quote do: str
                 end) }
