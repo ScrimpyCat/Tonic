@@ -811,12 +811,6 @@ defmodule Tonic do
 
       Examples
       --------
-        repeat :values, 4, fn result -> result end, :uint8
-
-        repeat :values, 4, fn { name, value } -> value end, :uint8
-
-        repeat :values, fn _ -> false end, fn result -> result end, :uint8
-
         repeat :values, 4, fn result -> result end do
             uint8 :a
             uint8 :b
