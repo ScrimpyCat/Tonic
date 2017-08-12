@@ -5,7 +5,7 @@ defmodule Tonic.Mixfile do
         [
             app: :tonic,
             description: "A DSL for conveniently loading binary data/files.",
-            version: "0.0.2",
+            version: "0.1.0",
             elixir: "~> 1.3",
             build_embedded: Mix.env == :prod,
             start_permanent: Mix.env == :prod,
