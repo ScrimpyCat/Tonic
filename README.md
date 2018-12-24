@@ -121,6 +121,6 @@ Installation
 ------------
 ```elixir
 defp deps do
-    [{ :tonic, "~> 0.1.0" }]
+    [{ :tonic, "~> 0.2.0" }]
 end
 ```
