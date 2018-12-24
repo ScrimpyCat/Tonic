@@ -220,7 +220,7 @@ defmodule Tonic do
 
         expand_operation(scheme, [quote do
             { loaded, scope, data, endian } =  case unquote(fixup_value(condition)) do
-                unquote(Enum.chunk_by(matches, fun) |> Enum.chunk(2) |> Enum.map(fn [branch, match|_] ->
+                unquote(Enum.chunk_by(matches, fun) |> Enum.chunk_every(2) |> Enum.map(fn [branch, match|_] ->
                     { :->, [], expand_operation(branch ++ match, []) }
                 end) |> Enum.reverse)
             end
