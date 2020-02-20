@@ -31,9 +31,7 @@ defmodule Tonic.Mixfile do
     #
     # Type `mix help deps` for more examples and options
     defp deps do
-        [
-            { :ex_doc, "~> 0.19", only: :dev }
-        ]
+        if(Version.compare(System.version, "1.7.0") == :lt, do: [{ :earmark, "~> 0.1", only: :dev }, { :ex_doc, "~> 0.7", only: :dev }], else: [{ :ex_doc, "~> 0.19", only: :dev, runtime: false }])
     end
 
     defp package do
