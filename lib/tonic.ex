@@ -152,6 +152,7 @@ defmodule Tonic do
 
     @doc false
     defp create_call({ function }), do: quote do: callback(unquote(function)([scope|currently_loaded], data, nil, endian), fn { _, value } -> value end)
+    defp create_call({ :spec, module }), do: quote do: unquote(module).load([], data, nil, endian)
     defp create_call({ function, name }), do: quote do: unquote(function)([scope|currently_loaded], data, unquote(fixup_value(name)), endian)
     defp create_call({ function, name, fun }) when is_function(fun) or is_tuple(fun), do: quote do: callback(unquote(function)([scope|currently_loaded], data, unquote(fixup_value(name)), endian), unquote(fun))
     defp create_call({ function, name, endianness }), do: quote do: unquote(function)([scope|currently_loaded], data, unquote(fixup_value(name)), unquote(fixup_value(endianness)))
@@ -399,12 +400,12 @@ defmodule Tonic do
       look it up.
 
 
-      **`get(atom) :: any`**  
+      **`get(atom) :: any`**#{"  "}
       Using a name for the lookup will cause it to search for that matched name in the current
       loaded data scope and containing scopes (but not separate branched scopes). If the name
       is not found, an exception will be raised `Tonic.MarkNotFound`.
 
-      **`get(fun) :: any`**  
+      **`get(fun) :: any`**#{"  "}
       Using a function for the lookup will cause it to pass the current state to the function.
       where the function can return the value you want to get.
 
@@ -481,7 +482,7 @@ defmodule Tonic do
       Executes the load operations only on the given chunk.
 
 
-      **<code class="inline">chunk(<a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">chunk(<a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the block as the load operation on the chunk of length.
 
 
@@ -518,10 +519,10 @@ defmodule Tonic do
       Executes the load operations but doesn't return the loaded data.
 
 
-      **<code class="inline">skip(atom) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">skip(atom) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Skip the given type.
 
-      **<code class="inline">skip(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">skip(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Skip the given block.
 
 
@@ -576,10 +577,10 @@ defmodule Tonic do
       the current loaded data.
 
 
-      **<code class="inline">optional(atom) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">optional(atom) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Optionally load the given type.
 
-      **<code class="inline">optional(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">optional(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Optionally load the given block.
 
 
@@ -628,6 +629,59 @@ defmodule Tonic do
         end
     end
 
+    #spec
+    @doc """
+      Execute the current spec again.
+
+      Examples
+      --------
+        defmodule Recursive do
+            use Tonic
+
+            uint8
+            optional do: spec
+        end
+
+        \# Tonic.load <<1, 2, 3>>, Recursive
+        \# => {{1, {2, {3}}}, ""}
+    """
+    @spec spec() :: ast
+    defmacro spec() do
+        quote do
+            spec(__MODULE__)
+        end
+    end
+
+    #spec
+    @doc """
+      Execute the provided spec.
+
+      Examples
+      --------
+        defmodule Foo do
+            use Tonic
+
+            uint8
+            spec Bar
+        end
+
+        defmodule Bar do
+            use Tonic
+
+            uint8 :a
+            uint8 :b
+        end
+
+        \# Tonic.load <<1, 2, 3>>, Foo
+        \# => {{1, {{:a, 2}, {:b, 3}}}, ""}
+    """
+    @spec spec(module) :: ast
+    defmacro spec(module) do
+        quote do
+            @tonic_data_scheme Map.put(@tonic_data_scheme, @tonic_current_scheme, [{ :spec, unquote(module) }|@tonic_data_scheme[@tonic_current_scheme]])
+        end
+    end
+
     #endian
     @doc """
       Sets the default endianness used by types where endianness is not specified.
@@ -656,10 +710,10 @@ defmodule Tonic do
       Repeat the given load operations until it reaches the end.
 
 
-      **<code class="inline">repeat(atom) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the type as the load operation to be repeated.
 
-      **<code class="inline">repeat(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(<a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the block as the load operation to be repeated.
 
 
@@ -692,18 +746,18 @@ defmodule Tonic do
       Repeat the given load operations until it reaches the end or for length.
 
 
-      **<code class="inline">repeat(atom, atom) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, atom) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the type as the load operation to be repeated. And wraps the output with the given
       name.
 
-      **<code class="inline">repeat(atom, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the block as the load operation to be repeated. And wraps the output with the given
       name.
 
-      **<code class="inline">repeat(<a href="#t:length/0">length</a>, atom) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(<a href="#t:length/0">length</a>, atom) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the type as the load operation to be repeated. And repeats for length.
 
-      **<code class="inline">repeat(<a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(<a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the block as the load operation to be repeated. And repeats for length.
 
 
@@ -770,11 +824,11 @@ defmodule Tonic do
       Repeat the given load operations for length.
 
 
-      **<code class="inline">repeat(atom, <a href="#t:length/0">length</a>, atom) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, <a href="#t:length/0">length</a>, atom) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the type as the load operation to be repeated. And wraps the output with the given
       name. Repeats for length.
 
-      **<code class="inline">repeat(atom, <a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">repeat(atom, <a href="#t:length/0">length</a>, <a href="#t:block/1">block(any)</a>) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Uses the block as the load operation to be repeated. And wraps the output with the given
       name. Repeats for length.
 
@@ -1001,10 +1055,10 @@ defmodule Tonic do
       Declare a new type as an alias of another type or of a function.
 
 
-      **<code class="inline">type(atom, atom) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">type(atom, atom) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Create the new type as an alias of another type.
 
-      **<code class="inline">type(atom, (bitstring, atom, <a href="#t:endianness/0">endianness</a> -> { any, bitstring })) :: <a href="#t:ast/0">ast</a></code>**  
+      **<code class="inline">type(atom, (bitstring, atom, <a href="#t:endianness/0">endianness</a> -> { any, bitstring })) :: <a href="#t:ast/0">ast</a></code>**#{"  "}
       Implement the type as a function.
 
 
@@ -1302,9 +1356,11 @@ defmodule Tonic.Types do
     defp list_to_string_drop_last_value([_], string), do: string
     defp list_to_string_drop_last_value([{ c }|values], string), do: list_to_string_drop_last_value(values, string <> <<c>>)
 
+    @doc false
     def convert_to_string_without_last_byte({ name, values }), do: { name, convert_to_string_without_last_byte(values) }
     def convert_to_string_without_last_byte(values), do: list_to_string_drop_last_value(values)
 
+    @doc false
     def convert_to_string({ name, values }), do: { name, convert_to_string(values) }
     def convert_to_string(values), do: List.foldl(values, "", fn { c }, s -> s <> <<c>> end)
 

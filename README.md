@@ -110,7 +110,6 @@ To-Do
 -----
 
  * Automatically use loader on extension and magic number match
- * Pass loading off to another module
  * Convenient types
  * New function: Seek. Ability to seek certain points in the data
  * Change repeat step callback to pass in current length
